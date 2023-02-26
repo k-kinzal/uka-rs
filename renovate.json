@@ -6,5 +6,5 @@
   ],
   "labels": ["dependencies"],
   "automerge": true,
-  "ignorePaths": [],
+  "ignorePaths": []
 }
