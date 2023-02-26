@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: stable20230226
+      - name: Cargo build
+        run: |
+          RUST_BACKTRACE=full cargo test --no-run
+      - name: Clear the cargo caches
+        shell: bash
+        run: |
+          cargo install cargo-cache --version 0.8.3 --no-default-features --features ci-autoclean
+          cargo-cache
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: stable20230226
+      - name: Cargo test
+        run: |
+          RUST_BACKTRACE=full cargo test
+  lint:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: stable20230226
+      - name: Cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+      - name: Cargo clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --tests --examples --all-features
+
