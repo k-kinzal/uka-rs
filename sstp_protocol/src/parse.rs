@@ -1,9 +1,10 @@
-use crate::header::{HeaderMap, HeaderName};
+use crate::header::map::HeaderMap;
+use crate::header::name::HeaderName;
 use crate::method::Method;
 use crate::request::Request;
 use crate::response::{AdditionalData, Response};
 use crate::version::Version;
-use crate::{charset, decode, header, Charset, StatusCode};
+use crate::{charset, header, Charset, StatusCode};
 use std::io;
 use std::io::{Cursor, Read, Seek};
 use std::num::ParseIntError;
@@ -27,7 +28,7 @@ pub enum Error {
     InvalidStatusCode,
 
     #[error("invalid header name: {0:?}")]
-    InvalidHeaderName(#[from] header::HeaderNameError),
+    InvalidHeaderName(#[from] header::name::Error),
 
     #[error("invalid header: {0:?}: {1:?}")]
     InvalidHeaderValue(HeaderName, String),
@@ -36,7 +37,7 @@ pub enum Error {
     MissingHeader(HeaderName),
 
     #[error("{1} in `{0}` header")]
-    FailedDecode(HeaderName, #[source] decode::Error),
+    FailedDecode(HeaderName, #[source] header::value::Error),
 
     #[error("{0}")]
     UnsupportedCharset(#[from] charset::Error),

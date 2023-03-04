@@ -246,9 +246,11 @@ pub enum Error {
     #[error("charset is required")]
     MissingCharset,
     #[error("{0}")]
-    InvalidHeaderName(#[from] header::HeaderNameError),
+    InvalidHeaderName(#[from] header::name::Error),
     #[error("{0}")]
-    FailedEncodeHeaderValue(#[from] encode::Error),
+    FailedEncodeHeaderValue(#[from] header::value::Error),
+    #[error("{0}")]
+    FailedEncodeAdditionalData(#[from] encode::Error),
 }
 
 #[derive(Default)]

@@ -280,7 +280,7 @@ mod tests {
     use rstest::rstest;
 
     #[test]
-    fn test_header_name_from_static_pass_alpha() -> Result<()> {
+    fn test_from_static_pass_alpha() -> Result<()> {
         let name = HeaderName::from_static("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")?;
         assert_eq!(
             name.to_string(),
@@ -291,7 +291,7 @@ mod tests {
     }
 
     #[test]
-    fn test_header_name_from_static_pass_digit() -> Result<()> {
+    fn test_from_static_pass_digit() -> Result<()> {
         let name = HeaderName::from_static("1234567890")?;
         assert_eq!(name.to_string(), "1234567890");
 
@@ -299,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_header_name_from_static_pass_acceptable_synbol() -> Result<()> {
+    fn test_from_static_pass_acceptable_synbol() -> Result<()> {
         let name = HeaderName::from_static("!#$%&'*+-.^_`|~")?;
         assert_eq!(name.to_string(), "!#$%&'*+-.^_`|~");
 
@@ -340,7 +340,7 @@ mod tests {
     #[case::rs("\x1e")]
     #[case::us("\x1f")]
     #[case::delete("\x7f")]
-    fn test_header_name_from_static_failed_control_character(#[case] input: String) -> Result<()> {
+    fn test_from_static_failed_control_character(#[case] input: String) -> Result<()> {
         let res = HeaderName::from_static(&input);
         assert!(res.is_err());
         matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
@@ -364,9 +364,7 @@ mod tests {
     #[case::right_square_bracket("]")]
     #[case::left_curly_brace("{")]
     #[case::right_curly_brace("}")]
-    fn test_header_name_from_static_failed_unavailable_symbols(
-        #[case] input: String,
-    ) -> Result<()> {
+    fn test_from_static_failed_unavailable_symbols(#[case] input: String) -> Result<()> {
         let res = HeaderName::from_static(&input);
         assert!(res.is_err());
         matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);

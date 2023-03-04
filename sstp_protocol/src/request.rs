@@ -1,9 +1,11 @@
 use crate::charset::Charset;
-use crate::header::{HeaderMap, HeaderName, HeaderValue};
+use crate::header::map::HeaderMap;
+use crate::header::name::HeaderName;
+use crate::header::value::HeaderValue;
 use crate::method::Method;
 use crate::parse::parse_request;
 use crate::version::Version;
-use crate::{encode, header, parse};
+use crate::{header, parse};
 use std::collections::HashMap;
 
 /// Request is a type that represents an SSTP request.
@@ -231,9 +233,9 @@ pub enum Error {
     #[error("charset is required")]
     MissingCharset,
     #[error("{0}")]
-    InvalidHeaderName(#[from] header::HeaderNameError),
+    InvalidHeaderName(#[from] header::name::Error),
     #[error("{0}")]
-    FailedEncodeHeaderValue(#[from] encode::Error),
+    FailedEncodeHeaderValue(#[from] header::value::Error),
 }
 
 #[derive(Default)]
