@@ -376,15 +376,10 @@ impl Builder {
                 },
             )?,
             charset: inner.charset.ok_or(Error::MissingCharset)?,
-            additional: inner
-                .additional
-                .or_else(|| Some(String::new()))
-                .ok_or_else(|| {
-                    unreachable!("unreachable because an empty string is set when None is set")
-                })
-                .and_then(|additional| {
-                    AdditionalData::from_static_with_charset(&additional, charset)
-                })?,
+            additional: AdditionalData::from_static_with_charset(
+                &inner.additional.unwrap_or_default(),
+                charset,
+            )?,
         })
     }
 
