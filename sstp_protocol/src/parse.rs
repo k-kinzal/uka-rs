@@ -987,4 +987,138 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_parse_response() -> Result<()> {
+        let input = [
+            b"SSTP/1.1 200 OK\r\n".to_vec(),
+            b"Charset: UTF-8\r\n".to_vec(),
+            b"Script: ".to_vec(),
+            Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。")?.to_vec(),
+            b"\r\n".to_vec(),
+            b"\r\n".to_vec(),
+            b"My Additional\r\n".to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let response = parse_response(&input)?;
+
+        assert_eq!(response.version(), Version::SSTP_11);
+        assert_eq!(response.status_code(), StatusCode::OK);
+        assert_eq!(response.charset(), Charset::UTF8);
+        assert_eq!(
+            response
+                .headers()
+                .get(HeaderName::SCRIPT)
+                .and_then(|v| v.text_with_charset(response.charset()).ok())
+                .unwrap(),
+            "\\h\\s0テストー。\\u\\s[10]テストやな。"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_missing_charset() -> Result<()> {
+        let input = [
+            b"SSTP/1.1 200 OK\r\n".to_vec(),
+            b"Script: ".to_vec(),
+            Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。")?.to_vec(),
+            b"\r\n".to_vec(),
+            b"\r\n".to_vec(),
+            b"My Additional\r\n".to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let res = parse_request(&input);
+
+        assert!(res.is_err());
+        matches!(res.unwrap_err(), Error::MissingHeader(HeaderName::CHARSET));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_not_ascii_charset() -> Result<()> {
+        let input = [
+            b"SSTP/1.1 200 OK\r\n".to_vec(),
+            b"Charset: ".to_vec(),
+            Encoder::encode_sjis("あいうえお")?.to_vec(),
+            b"\r\n".to_vec(),
+            b"Script: ".to_vec(),
+            Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。")?.to_vec(),
+            b"\r\n".to_vec(),
+            b"\r\n".to_vec(),
+            b"My Additional\r\n".to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let res = parse_request(&input);
+
+        assert!(res.is_err());
+        matches!(
+            res.unwrap_err(),
+            Error::FailedDecode(HeaderName::CHARSET, _)
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_unsupported_charset() -> Result<()> {
+        let input = [
+            b"SSTP/1.1 200 OK\r\n".to_vec(),
+            b"Charset: ISO-8859-16\r\n".to_vec(),
+            b"Script: ".to_vec(),
+            Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。")?.to_vec(),
+            b"\r\n".to_vec(),
+            b"\r\n".to_vec(),
+            b"My Additional\r\n".to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let res = parse_request(&input);
+
+        assert!(res.is_err());
+        matches!(res.unwrap_err(), Error::UnsupportedCharset(_));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_no_last_newline() -> Result<()> {
+        let input = [
+            b"SSTP/1.1 200 OK\r\n".to_vec(),
+            b"Charset: UTF-8\r\n".to_vec(),
+            b"Script: ".to_vec(),
+            Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。")?.to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let res = parse_request(&input);
+
+        assert!(res.is_err());
+        matches!(res.unwrap_err(), Error::Io(_));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_no_last_newline_with_additional() -> Result<()> {
+        let input = [
+            b"SSTP/1.1 200 OK\r\n".to_vec(),
+            b"Charset: UTF-8\r\n".to_vec(),
+            b"Script: ".to_vec(),
+            Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。")?.to_vec(),
+            b"\r\n".to_vec(),
+            b"My Additional\r\n".to_vec(),
+        ]
+        .concat();
+        let res = parse_request(&input);
+
+        assert!(res.is_err());
+        matches!(res.unwrap_err(), Error::Io(_));
+
+        Ok(())
+    }
 }
