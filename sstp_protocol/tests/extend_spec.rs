@@ -3,7 +3,8 @@ extern crate sstp_protocol;
 use anyhow::Result;
 use encoding_rs::SHIFT_JIS;
 use sstp_protocol::request::Request;
-use sstp_protocol::{Charset, HeaderName, Version};
+use sstp_protocol::response::Response;
+use sstp_protocol::{Charset, HeaderName, StatusCode, Version};
 
 /// Undefined specification for materia.
 ///
@@ -135,7 +136,7 @@ fn spec_allow_one_or_more_spaces_after_the_header_delimiter() -> Result<()> {
 /// However, since control characters are not acceptable,
 /// only certain printable characters are allowed according to the HTTP specification.
 #[test]
-fn spec_character_set_for_header_names_is_based_on_rfc_7230() -> Result<()> {
+fn spec_character_set_for_request_header_names_is_based_on_rfc_7230() -> Result<()> {
     let name = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~";
 
     let request = Request::builder()
@@ -154,6 +155,69 @@ fn spec_character_set_for_header_names_is_based_on_rfc_7230() -> Result<()> {
             .text()?,
         "foo"
     );
+
+    Ok(())
+}
+
+/// Undefined specification for materia.
+///
+/// In materia, headers are defined as consisting only of ASCII codes.
+/// however, since control characters are not acceptable,
+/// only certain printable characters are allowed according to the HTTP specification.
+#[test]
+fn spec_character_set_for_response_header_names_is_based_on_rfc_7230() -> Result<()> {
+    let name = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~";
+
+    let request = Request::builder()
+        .send(Version::SSTP_11)
+        .header(HeaderName::from_static(name)?, "foo")
+        .charset(Charset::SHIFT_JIS)
+        .build()?;
+    let input = request.as_bytes();
+
+    let request = Request::parse(&input)?;
+    assert_eq!(
+        request
+            .headers()
+            .get(HeaderName::from_static(name)?)
+            .unwrap()
+            .text()?,
+        "foo"
+    );
+
+    Ok(())
+}
+
+/// Undefined specification for materia.
+///
+/// The materiel defines the header value to be ASCII or the character code or character encoding specified in Charset.
+/// However, since control characters are not acceptable,
+/// A string containing control characters cannot be specified in the header value to avoid problems with parsing.
+#[test]
+fn spec_request_header_value_cannot_contain_control_characters() -> Result<()> {
+    let request = Request::builder()
+        .send(Version::SSTP_11)
+        .header(HeaderName::SENDER, "foo\0bar")
+        .charset(Charset::SHIFT_JIS)
+        .build();
+    assert!(request.is_err());
+
+    Ok(())
+}
+
+/// Undefined specification for materia.
+///
+/// The materiel defines the header value to be ASCII or the character code or character encoding specified in Charset.
+/// However, since control characters are not acceptable,
+/// A string containing control characters cannot be specified in the header value to avoid problems with parsing.
+#[test]
+fn spec_response_header_value_cannot_contain_control_characters() -> Result<()> {
+    let response = Response::builder()
+        .status_code(StatusCode::OK)
+        .header(HeaderName::SENDER, "foo\0bar")
+        .charset(Charset::SHIFT_JIS)
+        .build();
+    assert!(response.is_err());
 
     Ok(())
 }
