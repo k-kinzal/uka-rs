@@ -27,7 +27,7 @@ pub enum Error {
     InvalidStatusCode,
 
     #[error("invalid header name: {0:?}")]
-    InvalidHeaderName(#[from] header::Error),
+    InvalidHeaderName(#[from] header::HeaderNameError),
 
     #[error("invalid header: {0:?}: {1:?}")]
     InvalidHeaderValue(HeaderName, String),
