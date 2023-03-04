@@ -478,3 +478,105 @@ impl IntoIterator for HeaderMap {
             .into_iter()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+    use rstest::rstest;
+
+    #[test]
+    fn test_header_name_from_static_pass_alpha() -> Result<()> {
+        let name = HeaderName::from_static("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")?;
+        assert_eq!(
+            name.to_string(),
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_header_name_from_static_pass_digit() -> Result<()> {
+        let name = HeaderName::from_static("1234567890")?;
+        assert_eq!(name.to_string(), "1234567890");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_header_name_from_static_pass_acceptable_synbol() -> Result<()> {
+        let name = HeaderName::from_static("!#$%&'*+-.^_`|~")?;
+        assert_eq!(name.to_string(), "!#$%&'*+-.^_`|~");
+
+        Ok(())
+    }
+
+    #[rstest]
+    #[case::nul("\0")]
+    #[case::soh("\x01")]
+    #[case::stx("\x02")]
+    #[case::etx("\x03")]
+    #[case::eot("\x04")]
+    #[case::enq("\x05")]
+    #[case::ack("\x06")]
+    #[case::bel("\x07")]
+    #[case::bs("\x08")]
+    #[case::ht("\x09")]
+    #[case::lf("\n")]
+    #[case::vt("\x0b")]
+    #[case::ff("\x0c")]
+    #[case::cr("\r")]
+    #[case::so("\x0e")]
+    #[case::si("\x0f")]
+    #[case::dle("\x10")]
+    #[case::dc1("\x11")]
+    #[case::dc2("\x12")]
+    #[case::dc3("\x13")]
+    #[case::dc4("\x14")]
+    #[case::nak("\x15")]
+    #[case::syn("\x16")]
+    #[case::etb("\x17")]
+    #[case::can("\x18")]
+    #[case::em("\x19")]
+    #[case::sub("\x1a")]
+    #[case::esc("\x1b")]
+    #[case::fs("\x1c")]
+    #[case::gs("\x1d")]
+    #[case::rs("\x1e")]
+    #[case::us("\x1f")]
+    #[case::delete("\x7f")]
+    fn test_header_name_from_static_failed_control_character(#[case] input: String) -> Result<()> {
+        let res = HeaderName::from_static(&input);
+        assert!(res.is_err());
+        matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
+
+        Ok(())
+    }
+
+    #[rstest]
+    #[case::left_parenthesis("(")]
+    #[case::right_parenthesis(")")]
+    #[case::comma(",")]
+    #[case::slash("/")]
+    #[case::semicolon(";")]
+    #[case::less_than_sign("<")]
+    #[case::equals_sign("=")]
+    #[case::greater_than_sign(">")]
+    #[case::question_mark("?")]
+    #[case::at_sign("@")]
+    #[case::left_square_bracket("[")]
+    #[case::backslash("\\")]
+    #[case::right_square_bracket("]")]
+    #[case::left_curly_brace("{")]
+    #[case::right_curly_brace("}")]
+    fn test_header_name_from_static_failed_unavailable_symbols(
+        #[case] input: String,
+    ) -> Result<()> {
+        let res = HeaderName::from_static(&input);
+        assert!(res.is_err());
+        matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
+
+        Ok(())
+    }
+}

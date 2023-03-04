@@ -12,3 +12,4 @@ thiserror = "1.0.38"
 
 [dev-dependencies]
 anyhow = "1.0.68"
+rstest = "0.16.0"
