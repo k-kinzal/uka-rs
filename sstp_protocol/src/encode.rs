@@ -88,7 +88,7 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_ascii_failed() -> Result<()> {
+    fn test_encode_ascii_failed_pass_not_represented_ascii() -> Result<()> {
         let input = "さくら";
         let result = Encoder::encode_ascii(input);
 
@@ -109,7 +109,7 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_sjis_failed() -> Result<()> {
+    fn test_encode_sjis_failed_pass_not_represented_sjis() -> Result<()> {
         let input = "🐇";
         let result = Encoder::encode_sjis(input);
 
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_iso_2022_jp_failed() -> Result<()> {
+    fn test_encode_iso_2022_jp_failed_pass_not_represented_iso2022jp() -> Result<()> {
         let input = "🐇";
         let result = Encoder::encode_iso_2022_jp(input);
 
@@ -151,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_euc_jp_failed() -> Result<()> {
+    fn test_encode_euc_jp_failed_pass_not_represented_eucjp() -> Result<()> {
         let input = "🐇";
         let result = Encoder::encode_euc_jp(input);
 

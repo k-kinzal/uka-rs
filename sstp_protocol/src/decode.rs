@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_ascii_failed() -> Result<()> {
+    fn test_decode_ascii_failed_pass_non_ascii() -> Result<()> {
         let input = UTF8_BYTES;
         let result = Decoder::decode_ascii(&input);
 
@@ -113,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_sjis_failed() -> Result<()> {
+    fn test_decode_sjis_failed_pass_non_sjis() -> Result<()> {
         let input = UTF8_BYTES;
         let result = Decoder::decode_sjis(&input);
 
@@ -134,7 +134,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_iso_2022_jp_failed() -> Result<()> {
+    fn test_decode_iso_2022_jp_failed_pass_non_iso2022jp() -> Result<()> {
         let input = UTF8_BYTES;
         let result = Decoder::decode_iso_2022_jp(&input);
 
@@ -155,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_euc_jp_failed() -> Result<()> {
+    fn test_decode_euc_jp_failed_pass_non_eucjp() -> Result<()> {
         let input = UTF8_BYTES;
         let result = Decoder::decode_euc_jp(&input);
 
@@ -176,7 +176,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_utf8_failed() -> Result<()> {
+    fn test_decode_utf8_failed_pass_non_utf8() -> Result<()> {
         let input = SHIFT_JIS_BYTES;
         let result = Decoder::decode_utf8(&input);
 
