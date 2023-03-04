@@ -115,7 +115,7 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
     let mut cursor = Cursor::new(input);
 
     let method = parse_method(&mut cursor)?;
-    let version = parse_version(&mut cursor)?;
+    let version = parse_request_version(&mut cursor)?;
     let headers = parse_headers(&mut cursor)?;
     let charset = headers
         .get(HeaderName::CHARSET)
@@ -137,7 +137,7 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
 pub fn parse_response(input: &[u8]) -> Result<Response> {
     let mut cursor = Cursor::new(input);
 
-    let version = parse_version(&mut cursor)?;
+    let version = parse_response_version(&mut cursor)?;
     let status_code = parse_status_code(&mut cursor)?;
     let headers = parse_headers(&mut cursor)?;
     let additional = parse_additional_data(&mut cursor)?;
@@ -196,84 +196,26 @@ fn parse_method(cursor: &mut Cursor<&[u8]>) -> Result<Method> {
     }
 }
 
-fn parse_version(cursor: &mut Cursor<&[u8]>) -> Result<Version> {
-    let buffer = read!(cursor, 8).map_err(Error::from)?;
+fn parse_request_version(cursor: &mut Cursor<&[u8]>) -> Result<Version> {
+    let buffer = read!(cursor, 10).map_err(Error::from)?;
     match &buffer {
-        b"SSTP/1.0" => {
-            let buffer = read!(cursor, 1).map_err(Error::from)?;
-            match &buffer {
-                b" " => Ok(Version::SSTP_10),
-                b"\r" => {
-                    let buffer = read!(cursor, 1).map_err(Error::from)?;
-                    if &buffer == b"\n" {
-                        Ok(Version::SSTP_10)
-                    } else {
-                        Err(Error::InvalidVersion)
-                    }
-                }
-                _ => Err(Error::InvalidVersion),
-            }
-        }
-        b"SSTP/1.1" => {
-            let buffer = read!(cursor, 1).map_err(Error::from)?;
-            match &buffer {
-                b" " => Ok(Version::SSTP_11),
-                b"\r" => {
-                    let buffer = read!(cursor, 1).map_err(Error::from)?;
-                    if &buffer == b"\n" {
-                        Ok(Version::SSTP_11)
-                    } else {
-                        Err(Error::InvalidVersion)
-                    }
-                }
-                _ => Err(Error::InvalidVersion),
-            }
-        }
-        b"SSTP/1.2" => {
-            let buffer = read!(cursor, 1).map_err(Error::from)?;
-            match &buffer {
-                b" " => Ok(Version::SSTP_12),
-                b"\r" => {
-                    let buffer = read!(cursor, 1).map_err(Error::from)?;
-                    if &buffer == b"\n" {
-                        Ok(Version::SSTP_12)
-                    } else {
-                        Err(Error::InvalidVersion)
-                    }
-                }
-                _ => Err(Error::InvalidVersion),
-            }
-        }
-        b"SSTP/1.3" => {
-            let buffer = read!(cursor, 1).map_err(Error::from)?;
-            match &buffer {
-                b" " => Ok(Version::SSTP_13),
-                b"\r" => {
-                    let buffer = read!(cursor, 1).map_err(Error::from)?;
-                    if &buffer == b"\n" {
-                        Ok(Version::SSTP_13)
-                    } else {
-                        Err(Error::InvalidVersion)
-                    }
-                }
-                _ => Err(Error::InvalidVersion),
-            }
-        }
-        b"SSTP/1.4" => {
-            let buffer = read!(cursor, 1).map_err(Error::from)?;
-            match &buffer {
-                b" " => Ok(Version::SSTP_14),
-                b"\r" => {
-                    let buffer = read!(cursor, 1).map_err(Error::from)?;
-                    if &buffer == b"\n" {
-                        Ok(Version::SSTP_14)
-                    } else {
-                        Err(Error::InvalidVersion)
-                    }
-                }
-                _ => Err(Error::InvalidVersion),
-            }
-        }
+        b"SSTP/1.0\r\n" => Ok(Version::SSTP_10),
+        b"SSTP/1.1\r\n" => Ok(Version::SSTP_11),
+        b"SSTP/1.2\r\n" => Ok(Version::SSTP_12),
+        b"SSTP/1.3\r\n" => Ok(Version::SSTP_13),
+        b"SSTP/1.4\r\n" => Ok(Version::SSTP_14),
+        _ => Err(Error::InvalidVersion),
+    }
+}
+
+fn parse_response_version(cursor: &mut Cursor<&[u8]>) -> Result<Version> {
+    let buffer = read!(cursor, 9).map_err(Error::from)?;
+    match &buffer {
+        b"SSTP/1.0 " => Ok(Version::SSTP_10),
+        b"SSTP/1.1 " => Ok(Version::SSTP_11),
+        b"SSTP/1.2 " => Ok(Version::SSTP_12),
+        b"SSTP/1.3 " => Ok(Version::SSTP_13),
+        b"SSTP/1.4 " => Ok(Version::SSTP_14),
         _ => Err(Error::InvalidVersion),
     }
 }
@@ -491,9 +433,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_version_pass_sstp_1_0() -> Result<()> {
+    fn test_parse_request_version_pass_sstp_1_0() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.0\r\n".as_slice());
-        let version = parse_version(&mut cursor)?;
+        let version = parse_request_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_10);
 
@@ -501,9 +443,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_version_pass_sstp_1_1() -> Result<()> {
+    fn test_parse_request_version_pass_sstp_1_1() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.1\r\n".as_slice());
-        let version = parse_version(&mut cursor)?;
+        let version = parse_request_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_11);
 
@@ -511,9 +453,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_version_pass_sstp_1_2() -> Result<()> {
+    fn test_parse_request_version_pass_sstp_1_2() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.2\r\n".as_slice());
-        let version = parse_version(&mut cursor)?;
+        let version = parse_request_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_12);
 
@@ -521,9 +463,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_version_pass_sstp_1_3() -> Result<()> {
+    fn test_parse_request_version_pass_sstp_1_3() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.3\r\n".as_slice());
-        let version = parse_version(&mut cursor)?;
+        let version = parse_request_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_13);
 
@@ -531,9 +473,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_version_pass_sstp_1_4() -> Result<()> {
+    fn test_parse_request_version_pass_sstp_1_4() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.4\r\n".as_slice());
-        let version = parse_version(&mut cursor)?;
+        let version = parse_request_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_14);
 
@@ -541,9 +483,70 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_version_pass_undefined_version() -> Result<()> {
+    fn test_parse_request_version_pass_undefined_version() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/0.1\r\n".as_slice());
-        let res = parse_version(&mut cursor);
+        let res = parse_request_version(&mut cursor);
+
+        assert!(res.is_err());
+        matches!(res.unwrap_err(), Error::InvalidVersion);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_version_pass_sstp_1_0() -> Result<()> {
+        let mut cursor = Cursor::new(b"SSTP/1.0 ".as_slice());
+        let version = parse_response_version(&mut cursor)?;
+
+        assert_eq!(version, Version::SSTP_10);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_version_pass_sstp_1_1() -> Result<()> {
+        let mut cursor = Cursor::new(b"SSTP/1.1 ".as_slice());
+        let version = parse_response_version(&mut cursor)?;
+
+        assert_eq!(version, Version::SSTP_11);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_version_pass_sstp_1_2() -> Result<()> {
+        let mut cursor = Cursor::new(b"SSTP/1.2 ".as_slice());
+        let version = parse_response_version(&mut cursor)?;
+
+        assert_eq!(version, Version::SSTP_12);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_version_pass_sstp_1_3() -> Result<()> {
+        let mut cursor = Cursor::new(b"SSTP/1.3 ".as_slice());
+        let version = parse_response_version(&mut cursor)?;
+
+        assert_eq!(version, Version::SSTP_13);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_version_pass_sstp_1_4() -> Result<()> {
+        let mut cursor = Cursor::new(b"SSTP/1.4 ".as_slice());
+        let version = parse_response_version(&mut cursor)?;
+
+        assert_eq!(version, Version::SSTP_14);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_response_version_pass_undefined_version() -> Result<()> {
+        let mut cursor = Cursor::new(b"SSTP/0.1 ".as_slice());
+        let res = parse_response_version(&mut cursor);
 
         assert!(res.is_err());
         matches!(res.unwrap_err(), Error::InvalidVersion);
