@@ -299,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_static_pass_acceptable_synbol() -> Result<()> {
+    fn test_from_static_pass_acceptable_symbol() -> Result<()> {
         let name = HeaderName::from_static("!#$%&'*+-.^_`|~")?;
         assert_eq!(name.to_string(), "!#$%&'*+-.^_`|~");
 
