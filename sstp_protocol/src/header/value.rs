@@ -2,7 +2,7 @@ use crate::decode::Decoder;
 use crate::encode::Encoder;
 use crate::{decode, encode, Charset};
 
-/// Error that can occur when convert.
+/// Error occurs when serializing/deserializing HeaderValue.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("HeaderValue cannot handle strings that contain unprintable characters: {0}")]
