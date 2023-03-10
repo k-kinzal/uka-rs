@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-D warnings"
+      RUST_BACKTRACE: full
       CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v3
@@ -46,8 +47,29 @@ jobs:
         with:
           shared-key: stable20230226
       - name: Cargo test
-        run: |
-          RUST_BACKTRACE=full cargo test
+        run: cargo test
+  examples:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+      RUST_BACKTRACE: full
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: stable20230226
+      - run: |
+          for example in */examples/*.rs
+          do
+              cargo run --example "$(basename "${example%.rs}")" -- $args
+          done
   lint:
     needs: build
     runs-on: ubuntu-latest
