@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "debug_ghost",
     "dll_loader",
     "sstp_protocol",
 ]

@@ -1,5 +1,5 @@
 [package]
-name = "sstp_loader"
+name = "dll_loader"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,19 @@ edition = "2021"
 [dependencies]
 dlopen = "0.1.8"
 dlopen_derive = "0.1.4"
+encoding_rs = "0.8.31"
 libc = "0.2.139"
-windows = {version = "0.44.0", features = [ "Win32_System_Memory", "Win32_Globalization", "Win32_Foundation" ]}
+widestring = "1.0.2"
+windows = {version = "0.44.0", features = [
+    "Win32_System_Memory",
+    "Win32_Globalization",
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_LibraryLoader",
+    "Win32_Graphics_Gdi"
+]}
 
 [dev-dependencies]
