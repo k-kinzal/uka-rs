@@ -1,4 +1,6 @@
 [workspace]
 members = [
     "sstp_protocol",
+    "utils/bytes_macro",
+    "utils/read_macro",
 ]

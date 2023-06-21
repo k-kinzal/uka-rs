@@ -5,8 +5,9 @@ use crate::request::Request;
 use crate::response::{AdditionalData, Response};
 use crate::version::Version;
 use crate::{charset, header, Charset, StatusCode};
+use read_macro::{lookahead, read_expect, read_match, read_repeat, read_until};
 use std::io;
-use std::io::{Cursor, Read, Seek};
+use std::io::Cursor;
 use std::num::ParseIntError;
 use std::str::Utf8Error;
 
@@ -47,75 +48,20 @@ pub enum Error {
 
     #[error("{0}")]
     FailedParseInt(#[from] ParseIntError),
+
+    #[error("unexpected eof")]
+    UnexpectedEof,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
-
-macro_rules! read {
-    ( $cursor:expr, $byte:expr ) => {{
-        let mut buffer = [0; $byte];
-        $cursor.read_exact(&mut buffer[..]).map(|_| buffer)
-    }};
-}
-
-macro_rules! read_until {
-    ( $cursor:expr, $byte:expr ) => {{
-        let mut buffer = Vec::new();
-        loop {
-            let mut buf = [0; $byte.len()];
-            if let Err(e) = $cursor.read_exact(&mut buf) {
-                break Err(e);
-            } else if &buf == $byte {
-                break Ok(buffer);
-            } else {
-                if $byte.len() > 1 {
-                    if let Err(e) =
-                        $cursor.seek(std::io::SeekFrom::Current(-($byte.len() as i64 - 1)))
-                    {
-                        break Err(e);
-                    }
-                }
-                buffer.push(buf[0]);
-            }
-        }
-    }};
-}
-
-macro_rules! read_repeat {
-    ( $cursor:expr, $byte:expr ) => {{
-        let mut buffer = Vec::new();
-        loop {
-            let mut buf = [0; $byte.len()];
-            if let Err(e) = $cursor.read_exact(&mut buf) {
-                break Err(e);
-            } else if &buf != $byte {
-                if let Err(e) = $cursor.seek(std::io::SeekFrom::Current(-1)) {
-                    break Err(e);
-                } else {
-                    break Ok(buffer);
-                }
-            } else {
-                buffer.append(&mut buf.to_vec());
-            }
-        }
-    }};
-}
-
-macro_rules! lookahead {
-    ( $cursor:expr, $byte:expr ) => {{
-        let mut buffer = [0; $byte];
-        $cursor
-            .read_exact(&mut buffer[..])
-            .and_then(|_| $cursor.seek(std::io::SeekFrom::Current(-$byte as i64)))
-            .map(|_| buffer)
-    }};
-}
 
 pub fn parse_request(input: &[u8]) -> Result<Request> {
     let mut cursor = Cursor::new(input);
 
     let method = parse_method(&mut cursor)?;
-    let version = parse_request_version(&mut cursor)?;
+    skip_spaces(&mut cursor)?;
+    let version = parse_version(&mut cursor)?;
+    skip_newline(&mut cursor)?;
     let headers = parse_headers(&mut cursor)?;
     let charset = headers
         .get(HeaderName::CHARSET)
@@ -125,6 +71,8 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
                 .map_err(|e| Error::FailedDecode(HeaderName::CHARSET, e))
         })
         .and_then(|v| Charset::from_string(v).map_err(Error::from))?;
+    skip_newline(&mut cursor)?;
+    eof(&mut cursor)?;
 
     Ok(Request {
         method,
@@ -137,10 +85,11 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
 pub fn parse_response(input: &[u8]) -> Result<Response> {
     let mut cursor = Cursor::new(input);
 
-    let version = parse_response_version(&mut cursor)?;
+    let version = parse_version(&mut cursor)?;
+    skip_spaces(&mut cursor)?;
     let status_code = parse_status_code(&mut cursor)?;
+    skip_newline(&mut cursor)?;
     let headers = parse_headers(&mut cursor)?;
-    let additional = parse_additional_data(&mut cursor)?;
     let charset = headers
         .get(HeaderName::CHARSET)
         .ok_or_else(|| Error::MissingHeader(HeaderName::CHARSET))
@@ -149,6 +98,12 @@ pub fn parse_response(input: &[u8]) -> Result<Response> {
                 .map_err(|e| Error::FailedDecode(HeaderName::CHARSET, e))
         })
         .and_then(|v| Charset::from_string(v).map_err(Error::from))?;
+    skip_newline(&mut cursor)?;
+    let additional = parse_additional_data(&mut cursor)?;
+    if let AdditionalData::Text(_) = additional {
+        skip_newline(&mut cursor)?;
+    }
+    eof(&mut cursor)?;
 
     Ok(Response {
         version,
@@ -160,167 +115,43 @@ pub fn parse_response(input: &[u8]) -> Result<Response> {
 }
 
 fn parse_method(cursor: &mut Cursor<&[u8]>) -> Result<Method> {
-    let char = read!(cursor, 1).map_err(Error::from)?;
-    match &char {
-        b"N" => read!(cursor, 6)
-            .map_err(Error::from)
-            .and_then(|buf| match &buf {
-                b"OTIFY " => Ok(Method::NOTIFY),
-                _ => Err(Error::InvalidMethod),
-            }),
-        b"S" => read!(cursor, 4)
-            .map_err(Error::from)
-            .and_then(|buf| match &buf {
-                b"END " => Ok(Method::SEND),
-                _ => Err(Error::InvalidMethod),
-            }),
-        b"E" => read!(cursor, 7)
-            .map_err(Error::from)
-            .and_then(|buf| match &buf {
-                b"XECUTE " => Ok(Method::EXECUTE),
-                _ => Err(Error::InvalidMethod),
-            }),
-        b"G" => read!(cursor, 4)
-            .map_err(Error::from)
-            .and_then(|buf| match &buf {
-                b"IVE " => Ok(Method::GIVE),
-                _ => Err(Error::InvalidMethod),
-            }),
-        b"C" => read!(cursor, 11)
-            .map_err(Error::from)
-            .and_then(|buf| match &buf {
-                b"OMMUNICATE " => Ok(Method::COMMUNICATE),
-                _ => Err(Error::InvalidMethod),
-            }),
-        _ => Err(Error::InvalidMethod),
-    }
+    read_match!(cursor, {
+        b"NOTIFY" => Method::NOTIFY,
+        b"SEND" => Method::SEND,
+        b"EXECUTE" => Method::EXECUTE,
+        b"GIVE" => Method::GIVE,
+        b"COMMUNICATE" => Method::COMMUNICATE,
+    })
+    .map_err(Error::from)
 }
 
-fn parse_request_version(cursor: &mut Cursor<&[u8]>) -> Result<Version> {
-    let buffer = read!(cursor, 10).map_err(Error::from)?;
-    match &buffer {
-        b"SSTP/1.0\r\n" => Ok(Version::SSTP_10),
-        b"SSTP/1.1\r\n" => Ok(Version::SSTP_11),
-        b"SSTP/1.2\r\n" => Ok(Version::SSTP_12),
-        b"SSTP/1.3\r\n" => Ok(Version::SSTP_13),
-        b"SSTP/1.4\r\n" => Ok(Version::SSTP_14),
-        _ => Err(Error::InvalidVersion),
-    }
-}
-
-fn parse_response_version(cursor: &mut Cursor<&[u8]>) -> Result<Version> {
-    let buffer = read!(cursor, 9).map_err(Error::from)?;
-    match &buffer {
-        b"SSTP/1.0 " => Ok(Version::SSTP_10),
-        b"SSTP/1.1 " => Ok(Version::SSTP_11),
-        b"SSTP/1.2 " => Ok(Version::SSTP_12),
-        b"SSTP/1.3 " => Ok(Version::SSTP_13),
-        b"SSTP/1.4 " => Ok(Version::SSTP_14),
-        _ => Err(Error::InvalidVersion),
-    }
+fn parse_version(cursor: &mut Cursor<&[u8]>) -> Result<Version> {
+    read_match!(cursor, {
+        b"SSTP/1.0" => Version::SSTP_10,
+        b"SSTP/1.1" => Version::SSTP_11,
+        b"SSTP/1.2" => Version::SSTP_12,
+        b"SSTP/1.3" => Version::SSTP_13,
+        b"SSTP/1.4" => Version::SSTP_14,
+    }, 8)
+    .map_err(Error::from)
 }
 
 fn parse_status_code(cursor: &mut Cursor<&[u8]>) -> Result<StatusCode> {
-    let buffer = read!(cursor, 4).map_err(Error::from)?;
-    match &buffer {
-        b"200 " => {
-            let buffer = read!(cursor, 4).map_err(Error::from)?;
-            if &buffer == b"OK\r\n" {
-                Ok(StatusCode::OK)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"204 " => {
-            let buffer = read!(cursor, 12).map_err(Error::from)?;
-            if &buffer == b"No Content\r\n" {
-                Ok(StatusCode::NO_CONTENT)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"210 " => {
-            let buffer = read!(cursor, 7).map_err(Error::from)?;
-            if &buffer == b"Break\r\n" {
-                Ok(StatusCode::BREAK)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"400 " => {
-            let buffer = read!(cursor, 13).map_err(Error::from)?;
-            if &buffer == b"Bad Request\r\n" {
-                Ok(StatusCode::BAD_REQUEST)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"408 " => {
-            let buffer = read!(cursor, 17).map_err(Error::from)?;
-            if &buffer == b"Request Timeout\r\n" {
-                Ok(StatusCode::REQUEST_TIMEOUT)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"409 " => {
-            let buffer = read!(cursor, 10).map_err(Error::from)?;
-            if &buffer == b"Conflict\r\n" {
-                Ok(StatusCode::CONFLICT)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"420 " => {
-            let buffer = read!(cursor, 8).map_err(Error::from)?;
-            if &buffer == b"Refuse\r\n" {
-                Ok(StatusCode::REFUSE)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"501 " => {
-            let buffer = read!(cursor, 17).map_err(Error::from)?;
-            if &buffer == b"Not Implemented\r\n" {
-                Ok(StatusCode::NOT_IMPLEMENTED)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"503 " => {
-            let buffer = read!(cursor, 21).map_err(Error::from)?;
-            if &buffer == b"Service Unavailable\r\n" {
-                Ok(StatusCode::SERVICE_UNAVAILABLE)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"510 " => {
-            let buffer = read!(cursor, 14).map_err(Error::from)?;
-            if &buffer == b"Not Local IP\r\n" {
-                Ok(StatusCode::NOT_LOCAL_IP)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"511 " => {
-            let buffer = read!(cursor, 15).map_err(Error::from)?;
-            if &buffer == b"In Black List\r\n" {
-                Ok(StatusCode::IN_BLACK_LIST)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        b"512 " => {
-            let buffer = read!(cursor, 11).map_err(Error::from)?;
-            if &buffer == b"Invisible\r\n" {
-                Ok(StatusCode::INVISIBLE)
-            } else {
-                Err(Error::InvalidStatusCode)
-            }
-        }
-        _ => Err(Error::InvalidStatusCode),
-    }
+    read_match!(cursor, {
+        b"200 OK" => StatusCode::OK,
+        b"204 No Content" => StatusCode::NO_CONTENT,
+        b"210 Break" => StatusCode::BREAK,
+        b"400 Bad Request" => StatusCode::BAD_REQUEST,
+        b"408 Request Timeout" => StatusCode::REQUEST_TIMEOUT,
+        b"409 Conflict" => StatusCode::CONFLICT,
+        b"420 Refuse" => StatusCode::REFUSE,
+        b"501 Not Implemented" => StatusCode::NOT_IMPLEMENTED,
+        b"503 Service Unavailable" => StatusCode::SERVICE_UNAVAILABLE,
+        b"510 Not Local IP" => StatusCode::NOT_LOCAL_IP,
+        b"511 In Black List" => StatusCode::IN_BLACK_LIST,
+        b"512 Invisible" => StatusCode::INVISIBLE,
+    }, 3)
+    .map_err(Error::from)
 }
 
 fn parse_headers(cursor: &mut Cursor<&[u8]>) -> Result<HeaderMap> {
@@ -328,41 +159,51 @@ fn parse_headers(cursor: &mut Cursor<&[u8]>) -> Result<HeaderMap> {
     loop {
         let buffer = lookahead!(cursor, 2).map_err(Error::from)?;
         if &buffer == b"\r\n" {
-            let _ = read!(cursor, 2);
             break;
         }
-
         let name = read_until!(cursor, b":").map_err(Error::from)?;
-        let name = HeaderName::from_bytes(name.as_slice()).map_err(Error::from)?;
-
-        let _ = read_repeat!(cursor, b" ").map_err(Error::from)?;
-
+        skip_spaces(cursor)?;
         let value = read_until!(cursor, b"\r\n").map_err(Error::from)?;
 
-        map.insert(name, value)
+        map.insert(HeaderName::from_bytes(&name).map_err(Error::from)?, value)
     }
-
     Ok(map)
 }
 
 fn parse_additional_data(cursor: &mut Cursor<&[u8]>) -> Result<AdditionalData> {
-    let result = lookahead!(cursor, 1);
-    if result.is_err() && result.unwrap_err().kind() == std::io::ErrorKind::UnexpectedEof {
-        return Ok(AdditionalData::Empty);
-    }
-    let mut bytes = Vec::new();
-    loop {
-        let buffer = lookahead!(cursor, 2).map_err(Error::from)?;
-        if &buffer == b"\r\n" {
-            let _ = read!(cursor, 2);
-            break;
+    if eof(cursor).is_ok() {
+        Ok(AdditionalData::Empty)
+    } else {
+        let mut bytes = Vec::new();
+        loop {
+            let buffer = lookahead!(cursor, 2).map_err(Error::from)?;
+            if &buffer == b"\r\n" {
+                break;
+            }
+            let buffer = read_until!(cursor, b"\r\n").map_err(Error::from)?;
+            bytes.extend(buffer);
+            bytes.extend(b"\r\n");
         }
-        let buffer = read_until!(cursor, b"\r\n").map_err(Error::from)?;
-        bytes.extend(buffer);
-        bytes.extend(b"\r\n");
+        Ok(AdditionalData::Text(bytes))
     }
+}
 
-    Ok(AdditionalData::Text(bytes))
+fn skip_spaces(cursor: &mut Cursor<&[u8]>) -> Result<()> {
+    read_repeat!(cursor, b" ").map_err(Error::from)?;
+    Ok(())
+}
+
+fn skip_newline(cursor: &mut Cursor<&[u8]>) -> Result<()> {
+    read_expect!(cursor, b"\r\n").map_err(Error::from)?;
+    Ok(())
+}
+
+fn eof(cursor: &mut Cursor<&[u8]>) -> Result<()> {
+    if cursor.position() as usize == cursor.get_ref().len() {
+        Ok(())
+    } else {
+        Err(Error::UnexpectedEof)
+    }
 }
 
 #[cfg(test)]
@@ -433,9 +274,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_request_version_pass_sstp_1_0() -> Result<()> {
+    fn test_parse_version_pass_sstp_1_0() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.0\r\n".as_slice());
-        let version = parse_request_version(&mut cursor)?;
+        let version = parse_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_10);
 
@@ -443,9 +284,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_request_version_pass_sstp_1_1() -> Result<()> {
+    fn test_parse_version_pass_sstp_1_1() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.1\r\n".as_slice());
-        let version = parse_request_version(&mut cursor)?;
+        let version = parse_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_11);
 
@@ -453,9 +294,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_request_version_pass_sstp_1_2() -> Result<()> {
+    fn test_parse_version_pass_sstp_1_2() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.2\r\n".as_slice());
-        let version = parse_request_version(&mut cursor)?;
+        let version = parse_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_12);
 
@@ -463,9 +304,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_request_version_pass_sstp_1_3() -> Result<()> {
+    fn test_parse_version_pass_sstp_1_3() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.3\r\n".as_slice());
-        let version = parse_request_version(&mut cursor)?;
+        let version = parse_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_13);
 
@@ -473,9 +314,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_request_version_pass_sstp_1_4() -> Result<()> {
+    fn test_parse_version_pass_sstp_1_4() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.4\r\n".as_slice());
-        let version = parse_request_version(&mut cursor)?;
+        let version = parse_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_14);
 
@@ -483,9 +324,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_request_version_pass_undefined_version() -> Result<()> {
+    fn test_parse_version_pass_undefined_version() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/0.1\r\n".as_slice());
-        let res = parse_request_version(&mut cursor);
+        let res = parse_version(&mut cursor);
 
         assert!(res.is_err());
         matches!(res.unwrap_err(), Error::InvalidVersion);
@@ -494,62 +335,11 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_response_version_pass_sstp_1_0() -> Result<()> {
+    fn test_parse_version_pass_version_with_trailing_space() -> Result<()> {
         let mut cursor = Cursor::new(b"SSTP/1.0 ".as_slice());
-        let version = parse_response_version(&mut cursor)?;
+        let version = parse_version(&mut cursor)?;
 
         assert_eq!(version, Version::SSTP_10);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_response_version_pass_sstp_1_1() -> Result<()> {
-        let mut cursor = Cursor::new(b"SSTP/1.1 ".as_slice());
-        let version = parse_response_version(&mut cursor)?;
-
-        assert_eq!(version, Version::SSTP_11);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_response_version_pass_sstp_1_2() -> Result<()> {
-        let mut cursor = Cursor::new(b"SSTP/1.2 ".as_slice());
-        let version = parse_response_version(&mut cursor)?;
-
-        assert_eq!(version, Version::SSTP_12);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_response_version_pass_sstp_1_3() -> Result<()> {
-        let mut cursor = Cursor::new(b"SSTP/1.3 ".as_slice());
-        let version = parse_response_version(&mut cursor)?;
-
-        assert_eq!(version, Version::SSTP_13);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_response_version_pass_sstp_1_4() -> Result<()> {
-        let mut cursor = Cursor::new(b"SSTP/1.4 ".as_slice());
-        let version = parse_response_version(&mut cursor)?;
-
-        assert_eq!(version, Version::SSTP_14);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_response_version_pass_undefined_version() -> Result<()> {
-        let mut cursor = Cursor::new(b"SSTP/0.1 ".as_slice());
-        let res = parse_response_version(&mut cursor);
-
-        assert!(res.is_err());
-        matches!(res.unwrap_err(), Error::InvalidVersion);
 
         Ok(())
     }
@@ -861,17 +651,6 @@ mod tests {
 
         assert!(res.is_err());
         matches!(res.unwrap_err(), Error::Io(_));
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_additional_data_empty() -> Result<()> {
-        let input = b"";
-        let mut cursor = Cursor::new(input.as_slice());
-        let additional = parse_additional_data(&mut cursor)?;
-
-        matches!(additional, AdditionalData::Empty);
 
         Ok(())
     }
