@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "sstp_protocol",
+    "sstp",
     "utils/bytes_macro",
     "utils/read_macro",
 ]
