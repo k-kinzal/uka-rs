@@ -13,4 +13,4 @@ read_macro = { path = "../utils/read_macro" }
 
 [dev-dependencies]
 anyhow = "1.0.71"
-rstest = "0.17.0"
+rstest = "0.18.0"
