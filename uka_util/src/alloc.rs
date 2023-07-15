@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 #[cfg(windows)]
 use windows::Win32::Foundation::HGLOBAL;
 #[cfg(windows)]
-use windows::Win32::System::Memory::{GlobalAlloc, GlobalFree, GLOBAL_ALLOC_FLAGS, GMEM_FIXED};
+use windows::Win32::System::Memory::{GlobalAlloc, GlobalFree, GMEM_FIXED};
 
 #[derive(thiserror::Error, Debug)]
 #[error("failed to allocate memory")]
