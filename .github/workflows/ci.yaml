@@ -7,7 +7,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     env:
       RUSTFLAGS: "-D warnings"
       CARGO_INCREMENTAL: 0
@@ -22,16 +25,19 @@ jobs:
         with:
           shared-key: stable20230226
       - name: Cargo build
-        run: |
-          RUST_BACKTRACE=full cargo test --no-run
+        run: cargo test --no-run
       - name: Clear the cargo caches
         shell: bash
         run: |
           cargo install cargo-cache --version 0.8.3 --no-default-features --features ci-autoclean
           cargo-cache
+
   test:
     needs: build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     env:
       RUSTFLAGS: "-D warnings"
       RUST_BACKTRACE: full
@@ -48,6 +54,7 @@ jobs:
           shared-key: stable20230226
       - name: Cargo test
         run: cargo test
+
   examples:
     needs: build
     runs-on: ubuntu-latest
@@ -70,6 +77,7 @@ jobs:
           do
               cargo run --example "$(basename "${example%.rs}")" -- $args
           done
+
   lint:
     needs: build
     runs-on: ubuntu-latest
