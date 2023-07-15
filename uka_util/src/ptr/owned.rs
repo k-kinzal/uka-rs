@@ -38,35 +38,6 @@ where
     T: Sized,
     A: Allocator,
 {
-    /// Returns reference to T
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use uka_util::ptr::OwnedPtr;
-    /// #
-    /// let ptr = OwnedPtr::new(1);
-    /// assert_eq!(ptr.as_ref(), &1);
-    /// ```
-    pub fn as_ref(&self) -> &T {
-        unsafe { self.ptr.as_ref() }
-    }
-
-    /// Returns mutable reference to T
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use uka_util::ptr::OwnedPtr;
-    /// #
-    /// let mut ptr = OwnedPtr::new(1);
-    /// *ptr.as_mut() = 2;
-    /// assert_eq!(ptr.as_ref(), &2);
-    /// ```
-    pub fn as_mut(&mut self) -> &mut T {
-        unsafe { self.ptr.as_mut() }
-    }
-
     /// Returns reference to `T` as slice.
     ///
     /// # Safety
@@ -166,7 +137,7 @@ where
     ///     assert_eq!(raw.as_ref(), &1);
     /// }
     ///
-    /// let alloc = System::default();
+    /// let alloc = System;
     /// let layout = Layout::from_size_align(size_of::<i32>(), align_of::<i32>()).unwrap();
     /// alloc.deallocate(raw.into(), layout);
     /// ```
@@ -196,7 +167,7 @@ where
     ///     assert_eq!(raw.as_ref(), &[1, 2, 3]);
     /// }
     ///
-    /// let alloc = System::default();
+    /// let alloc = System;
     /// let layout = Layout::from_size_align(size_of::<i32>() * 3, align_of::<i32>()).unwrap();
     /// alloc.deallocate(raw.into(), layout);
     /// ```
@@ -219,7 +190,7 @@ where
         Self {
             ptr: NonNull::new(ptr).expect("can never be NULL as it is a pointer to a valid T"),
             size: std::mem::size_of::<T>(),
-            alloc: System::default(),
+            alloc: System,
         }
     }
 
@@ -235,7 +206,7 @@ where
         Self {
             ptr: NonNull::new(ptr).expect("can never be NULL as it is a pointer to a valid Vec<T>"),
             size,
-            alloc: System::default(),
+            alloc: System,
         }
     }
 
@@ -308,6 +279,26 @@ where
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut()
+    }
+}
+
+impl<T, A> AsRef<T> for OwnedPtr<T, A>
+where
+    T: Sized,
+    A: Allocator,
+{
+    fn as_ref(&self) -> &T {
+        unsafe { self.ptr.as_ref() }
+    }
+}
+
+impl<T, A> AsMut<T> for OwnedPtr<T, A>
+where
+    T: Sized,
+    A: Allocator,
+{
+    fn as_mut(&mut self) -> &mut T {
+        unsafe { self.ptr.as_mut() }
     }
 }
 
