@@ -12,7 +12,7 @@ enum Protocol {
 /// Version is the version of the SSTP protocol.
 ///
 /// ```rust
-/// # use sstp::Version;
+/// # use uka_sstp::Version;
 /// # let version = Version::SSTP_14;
 /// match version {
 ///     Version::SSTP_10 => assert_eq!(version.to_string(), "SSTP/1.0"),

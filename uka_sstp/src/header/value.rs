@@ -29,7 +29,7 @@ impl HeaderValue {
     /// Extract HeaderValue as an ASCII code string.
     ///
     /// ```rust
-    /// # use sstp::{HeaderValue};
+    /// # use uka_sstp::{HeaderValue};
     /// # use anyhow::Result;
     /// # fn main() -> Result<()> {
     /// assert_eq!(HeaderValue::from_static("sakura")?.text()?, "sakura");
@@ -42,7 +42,7 @@ impl HeaderValue {
 
     /// Extract HeaderValue as a string with Charset
     /// ```rust
-    /// # use sstp::{HeaderValue, Charset};
+    /// # use uka_sstp::{HeaderValue, Charset};
     /// # use anyhow::Result;
     /// # fn main() -> Result<()> {
     /// let input = [130, 179, 130, 173, 130, 231].to_vec();
@@ -69,7 +69,7 @@ impl HeaderValue {
     ///　Convert string to HeaderValue with ASCII code bytes.
     ///
     /// ```rust
-    /// # use sstp::{HeaderValue};
+    /// # use uka_sstp::{HeaderValue};
     /// assert_eq!(HeaderValue::from_static("sakura").unwrap().as_bytes(), b"sakura");
     /// ```
     pub fn from_static(s: &str) -> Result<Self> {
@@ -79,7 +79,7 @@ impl HeaderValue {
     ///　Convert string to HeaderValue with Charset.
     ///
     ///```rust
-    /// # use sstp::{Charset, HeaderValue};
+    /// # use uka_sstp::{Charset, HeaderValue};
     /// assert_eq!(
     ///    HeaderValue::from_static_with_charset("さくら", Charset::SHIFT_JIS).unwrap().as_bytes(),
     ///    [130, 179, 130, 173, 130, 231]);

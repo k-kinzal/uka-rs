@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "sstp",
     "uka_macro",
+    "uka_sstp",
     "uka_util",
 ]

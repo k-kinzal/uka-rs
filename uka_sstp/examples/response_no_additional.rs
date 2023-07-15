@@ -5,15 +5,13 @@
 //! Charset: UTF-8
 //! Script: \h\s0テストー。\u\s[10]テストやな。
 //!
-//! 追加データはここ
-//!
 //! [EOD]
 //! ```
-extern crate sstp;
+extern crate uka_sstp;
 
 use anyhow::Result;
-use sstp::response::Response;
-use sstp::{Charset, HeaderName, StatusCode, Version};
+use uka_sstp::response::{AdditionalData, Response};
+use uka_sstp::{Charset, HeaderName, StatusCode, Version};
 
 fn main() -> Result<()> {
     let response = Response::builder()
@@ -24,7 +22,6 @@ fn main() -> Result<()> {
             HeaderName::SCRIPT,
             "\\h\\s0テストー。\\u\\s[10]テストやな。",
         )
-        .additional("追加データはここ")
         .build()?;
     let input = response.as_bytes();
 
@@ -39,12 +36,8 @@ fn main() -> Result<()> {
             .and_then(|v| v.text_with_charset(response.charset()).ok()),
         Some("\\h\\s0テストー。\\u\\s[10]テストやな。".to_string())
     );
-    assert_eq!(
-        response
-            .additional()
-            .text_with_charset(response.charset())?,
-        "追加データはここ"
-    );
+    matches!(response.additional(), AdditionalData::Empty);
+    assert_eq!(response.additional().text()?, "");
 
     assert_eq!(response.as_bytes(), input);
 

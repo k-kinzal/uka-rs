@@ -111,7 +111,7 @@ impl HeaderName {
     ///　Converts a str to HeaderName.
     ///
     /// ```rust
-    /// # use sstp::HeaderName;
+    /// # use uka_sstp::HeaderName;
     /// assert_eq!(HeaderName::from_static("Charset").unwrap(), HeaderName::CHARSET);
     /// assert_eq!(HeaderName::from_static("Sender").unwrap(), HeaderName::SENDER);
     /// assert_eq!(HeaderName::from_static("Event").unwrap(), HeaderName::EVENT);
@@ -174,7 +174,7 @@ impl HeaderName {
     ///　Converts a bytes to HeaderName.
     ///
     /// ```rust
-    /// # use sstp::HeaderName;
+    /// # use uka_sstp::HeaderName;
     /// assert_eq!(HeaderName::from_bytes(b"Charset").unwrap(), HeaderName::CHARSET);
     /// assert_eq!(HeaderName::from_bytes(b"Sender").unwrap(), HeaderName::SENDER);
     /// assert_eq!(HeaderName::from_bytes(b"Event").unwrap(), HeaderName::EVENT);
@@ -207,7 +207,7 @@ impl HeaderName {
     ///　Converts a HeaderName to bytes.
     ///
     /// ```rust
-    /// # use sstp::HeaderName;
+    /// # use uka_sstp::HeaderName;
     /// assert_eq!(HeaderName::CHARSET.as_bytes(), b"Charset");
     /// assert_eq!(HeaderName::SENDER.as_bytes(), b"Sender");
     /// assert_eq!(HeaderName::EVENT.as_bytes(), b"Event");

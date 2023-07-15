@@ -12,7 +12,7 @@ enum Inner {
 /// Method is the method of the SSTP request.
 ///
 /// ```rust
-/// # use sstp::Method;
+/// # use uka_sstp::Method;
 /// # let method = Method::NOTIFY;
 /// match method {
 ///     Method::NOTIFY => assert_eq!(method.to_string(), "NOTIFY"),

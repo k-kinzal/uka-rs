@@ -4,7 +4,7 @@ use std::fmt::Display;
 /// StatusCode represents the status code of the SSTP response.
 ///
 /// ```rust
-/// # use sstp::StatusCode;
+/// # use uka_sstp::StatusCode;
 /// assert_eq!(StatusCode::OK.to_string(), "200 OK");
 /// assert_eq!(StatusCode::NO_CONTENT.to_string(), "204 No Content");
 /// assert_eq!(StatusCode::BREAK.to_string(), "210 Break");

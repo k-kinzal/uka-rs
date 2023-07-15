@@ -12,8 +12,8 @@ use std::collections::HashMap;
 /// and an accessor to the headers defined in the specification.
 ///
 /// ```rust
-/// # use sstp::{Charset, HeaderName, Method, Version};
-/// # use sstp::request::Request;
+/// # use uka_sstp::{Charset, HeaderName, Method, Version};
+/// # use uka_sstp::request::Request;
 /// let request = Request::builder()
 ///     .send(Version::SSTP_11)
 ///     .header(HeaderName::SENDER, "カードキャプター")
@@ -37,8 +37,8 @@ impl Request {
     ///
     /// ```rust
     /// # use uka_util::encode::Encoder;
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let input = [
     ///     b"SEND SSTP/1.1\r\n".to_vec(),
     ///     b"Sender:".to_vec(),
@@ -61,8 +61,8 @@ impl Request {
     /// Returns a builder that generates a type for the Request
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let request = Request::builder()
     ///     .notify(Version::SSTP_10)
     ///     .header(HeaderName::SENDER, "さくら")
@@ -259,8 +259,8 @@ impl Builder {
     /// Build notify request.
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let builder = Request::builder();
     /// let request = builder
     ///     .notify(Version::SSTP_10)
@@ -280,8 +280,8 @@ impl Builder {
     /// Build send request.
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let builder = Request::builder();
     /// let request = builder
     ///     .send(Version::SSTP_11)
@@ -300,8 +300,8 @@ impl Builder {
     /// Build execute request.
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let builder = Request::builder();
     /// let request = builder
     ///     .execute(Version::SSTP_10)
@@ -319,8 +319,8 @@ impl Builder {
     /// Build give request.
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let builder = Request::builder();
     /// let request = builder
     ///     .give(Version::SSTP_11)
@@ -338,8 +338,8 @@ impl Builder {
     /// Build communicate request.
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let builder = Request::builder();
     /// let request = builder
     ///     .communicate(Version::SSTP_11)
@@ -358,8 +358,8 @@ impl Builder {
     /// Set SSTP method.
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, Version};
-    /// # use sstp::request::Request;
+    /// # use uka_sstp::{Charset, HeaderName, Method, Version};
+    /// # use uka_sstp::request::Request;
     /// let builder = Request::builder();
     /// let request = builder
     ///     .method(Method::NOTIFY)

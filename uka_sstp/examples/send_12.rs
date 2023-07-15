@@ -10,11 +10,11 @@
 //!
 //! [EOD]
 //! ```
-extern crate sstp;
+extern crate uka_sstp;
 
 use anyhow::Result;
-use sstp::request::Request;
-use sstp::{Charset, HeaderName, Method, Version};
+use uka_sstp::request::Request;
+use uka_sstp::{Charset, HeaderName, Method, Version};
 
 fn main() -> Result<()> {
     let request = Request::builder()

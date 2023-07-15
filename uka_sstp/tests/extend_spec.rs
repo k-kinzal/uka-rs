@@ -1,9 +1,9 @@
-extern crate sstp;
+extern crate uka_sstp;
 
 use anyhow::Result;
-use sstp::request::Request;
-use sstp::response::Response;
-use sstp::{Charset, HeaderName, StatusCode, Version};
+use uka_sstp::request::Request;
+use uka_sstp::response::Response;
+use uka_sstp::{Charset, HeaderName, StatusCode, Version};
 use uka_util::encode::Encoder;
 
 /// Undefined specification for materia.

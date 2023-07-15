@@ -19,7 +19,7 @@ impl AdditionalData {
     /// Extract HeaderValue as an ASCII code string.
     ///
     /// ```rust
-    /// # use sstp::response::AdditionalData;
+    /// # use uka_sstp::response::AdditionalData;
     /// let data = AdditionalData::from(b"sakura".to_vec());
     /// assert_eq!(data.text().unwrap(), "sakura");
     /// ```
@@ -30,8 +30,8 @@ impl AdditionalData {
     /// Extract HeaderValue as a string with Charset
     ///
     /// ```rust
-    /// # use sstp::Charset;
-    /// # use sstp::response::AdditionalData;
+    /// # use uka_sstp::Charset;
+    /// # use uka_sstp::response::AdditionalData;
     /// let data = AdditionalData::from([130, 179, 130, 173, 130, 231].to_vec());
     /// assert_eq!(data.text_with_charset(Charset::SHIFT_JIS).unwrap(), "さくら");
     /// ```
@@ -54,7 +54,7 @@ impl AdditionalData {
     /// Convert string to AdditionalData with ASCII code bytes.
     ///
     /// ```rust
-    /// # use sstp::response::AdditionalData;
+    /// # use uka_sstp::response::AdditionalData;
     /// let data = AdditionalData::from_static("sakura").unwrap();
     /// matches!(data, AdditionalData::Text(bytes) if bytes == b"sakura");
     /// ```
@@ -65,8 +65,8 @@ impl AdditionalData {
     ///　Convert string to AdditionalData with Charset.
     ///
     /// ```rust
-    /// # use sstp::Charset;
-    /// # use sstp::response::AdditionalData;
+    /// # use uka_sstp::Charset;
+    /// # use uka_sstp::response::AdditionalData;
     /// let data = AdditionalData::from_static_with_charset("さくら", Charset::SHIFT_JIS).unwrap();
     /// matches!(data, AdditionalData::Text(bytes) if bytes == [130, 179, 130, 173, 130, 231]);
     /// ```
@@ -117,8 +117,8 @@ impl Default for AdditionalData {
 /// Response provides a builder to generate types, a parser to generate types from bytes.
 ///
 /// ```rust
-/// # use sstp::{Charset, HeaderName, Method, StatusCode, Version};
-/// # use sstp::response::Response;
+/// # use uka_sstp::{Charset, HeaderName, Method, StatusCode, Version};
+/// # use uka_sstp::response::Response;
 /// let response = Response::builder()
 ///     .version(Version::SSTP_11)
 ///     .status_code(StatusCode::OK)
@@ -146,8 +146,8 @@ impl Response {
     ///
     /// ```rust
     /// # use uka_util::encode::Encoder;
-    /// # use sstp::{Charset, HeaderName, Method, StatusCode, Version};
-    /// # use sstp::response::Response;
+    /// # use uka_sstp::{Charset, HeaderName, Method, StatusCode, Version};
+    /// # use uka_sstp::response::Response;
     /// let input = [
     ///     b"SSTP/1.1 200 OK\r\n".to_vec(),
     ///     b"Charset: UTF-8\r\n".to_vec(),
@@ -169,8 +169,8 @@ impl Response {
     /// Returns a builder that generates a type for the Response
     ///
     /// ```rust
-    /// # use sstp::{Charset, HeaderName, Method, StatusCode, Version};
-    /// # use sstp::response::Response;
+    /// # use uka_sstp::{Charset, HeaderName, Method, StatusCode, Version};
+    /// # use uka_sstp::response::Response;
     /// let response = Response::builder()
     ///     .version(Version::SSTP_11)
     ///     .status_code(StatusCode::OK)

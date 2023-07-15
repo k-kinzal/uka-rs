@@ -22,7 +22,7 @@ enum Inner {
 /// Charset is the character set and encoding of strings in SSTP headers.
 ///
 /// ```rust
-/// # use sstp::Charset;
+/// # use uka_sstp::Charset;
 /// #
 /// # let charset = Charset::ASCII;
 /// match charset {
@@ -54,7 +54,7 @@ impl Charset {
     ///　Converts a str to Charset.
     ///
     /// ```rust
-    /// # use sstp::Charset;
+    /// # use uka_sstp::Charset;
     ///
     /// assert_eq!(Charset::ASCII, Charset::from_static("ASCII").unwrap());
     /// assert_eq!(Charset::SHIFT_JIS, Charset::from_static("Shift_JIS").unwrap());

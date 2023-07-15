@@ -1,31 +1,31 @@
-//! http://usada.sakura.vg/contents/sstp.html#execute12
+//! http://usada.sakura.vg/contents/sstp.html#execute13
 //!
 //! ```text
-//! EXECUTE SSTP/1.2
+//! EXECUTE SSTP/1.3
 //! Sender: カードキャプター
-//! Command: GetVersion
+//! Command: Quiet
 //! Charset: Shift_JIS
 //!
 //! [EOD]
 //! ```
-extern crate sstp;
+extern crate uka_sstp;
 
 use anyhow::Result;
-use sstp::request::Request;
-use sstp::{Charset, HeaderName, Method, Version};
+use uka_sstp::request::Request;
+use uka_sstp::{Charset, HeaderName, Method, Version};
 
 fn main() -> Result<()> {
     let request = Request::builder()
-        .execute(Version::SSTP_12)
+        .execute(Version::SSTP_13)
         .header(HeaderName::SENDER, "カードキャプター")
-        .header(HeaderName::COMMAND, "GetVersion")
+        .header(HeaderName::COMMAND, "Quiet")
         .charset(Charset::SHIFT_JIS)
         .build()?;
     let input = request.as_bytes();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::EXECUTE);
-    assert_eq!(request.version(), Version::SSTP_12);
+    assert_eq!(request.version(), Version::SSTP_13);
     assert_eq!(
         request
             .sender()
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     );
     assert_eq!(
         request.command().and_then(|v| v.text().ok()),
-        Some("GetVersion".to_string())
+        Some("Quiet".to_string())
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
