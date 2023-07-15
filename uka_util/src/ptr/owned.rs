@@ -164,7 +164,7 @@ where
     /// let ptr = OwnedPtr::from_slice(&[1, 2, 3]);
     /// let raw = ptr.into_raw_slice();
     /// unsafe {
-    ///     assert_eq!(raw.as_ref(), &[1, 2, 3]);
+    ///     assert_eq!(raw.as_slice(), &[1, 2, 3]);
     /// }
     ///
     /// let alloc = System;
