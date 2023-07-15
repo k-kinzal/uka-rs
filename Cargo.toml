@@ -3,5 +3,4 @@ members = [
     "sstp",
     "uka_util",
     "utils/bytes_macro",
-    "utils/read_macro",
 ]

@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 thiserror = "1.0.43"
 uka_util = { path = "../uka_util" }
-read_macro = { path = "../utils/read_macro" }
 
 [dev-dependencies]
 anyhow = "1.0.71"

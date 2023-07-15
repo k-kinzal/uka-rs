@@ -4,11 +4,11 @@ use crate::request::Request;
 use crate::response::{AdditionalData, Response};
 use crate::version::Version;
 use crate::{charset, Charset, StatusCode};
-use read_macro::{lookahead, read_expect, read_match, read_repeat, read_until};
 use std::io;
 use std::io::Cursor;
 use std::num::ParseIntError;
 use std::str::Utf8Error;
+use uka_util::cursor::{lookahead, read_expect, read_match, read_repeat, read_until};
 
 /// Error that can occur when parse from bytes.
 #[derive(thiserror::Error, Debug)]

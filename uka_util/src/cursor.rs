@@ -5,7 +5,7 @@ pub use bytes_macro;
 /// # Example
 ///
 /// ```rust
-/// # use read_macro::read;
+/// # use uka_util::cursor::read;
 /// # use std::io::Cursor;
 /// #
 /// let mut cursor = Cursor::new(b"hello");
@@ -19,6 +19,7 @@ macro_rules! read {
         $cursor.read_exact(&mut buffer[..]).map(|_| buffer)
     }};
 }
+pub use read;
 
 /// read_expect! is a macro that reads bytes from a cursor.
 /// If the read bytes are not the expected bytes, it returns an error.
@@ -26,7 +27,7 @@ macro_rules! read {
 /// # Example
 ///
 /// ```rust
-/// # use read_macro::read_expect;
+/// # use uka_util::cursor::read_expect;
 /// # use std::io::Cursor;
 /// #
 /// let mut cursor = Cursor::new(b"hello");
@@ -51,13 +52,14 @@ macro_rules! read_expect {
         })
     }};
 }
+pub use read_expect;
 
 /// read_repeat! is a macro that reads bytes from a cursor until the bytes are not the expected bytes.
 ///
 /// # Example
 ///
 /// ```rust
-/// # use read_macro::{read_expect, read_repeat};
+/// # use uka_util::cursor::{read_expect, read_repeat};
 /// # use std::io::Cursor;
 /// #
 /// let mut cursor = Cursor::new(b"aaaaa:bbbbb");
@@ -97,13 +99,14 @@ macro_rules! read_repeat {
         }
     }};
 }
+pub use read_repeat;
 
 /// read_until! is a macro that reads bytes from a cursor until the bytes are the expected bytes.
 ///
 /// # Example
 ///
 /// ```rust
-/// # use read_macro::read_until;
+/// # use uka_util::cursor::read_until;
 /// # use std::io::Cursor;
 /// #
 /// let mut cursor = Cursor::new(b"hello:world\r\n");
@@ -135,13 +138,14 @@ macro_rules! read_until {
         }
     }};
 }
+pub use read_until;
 
 /// read_match! is a macro that reads bytes from a cursor and matches the bytes.
 ///
 /// # Example
 ///
 /// ```rust
-/// # use read_macro::read_match;
+/// # use uka_util::cursor::read_match;
 /// # use std::io::Cursor;
 /// #
 /// let mut cursor = Cursor::new(b"hello");
@@ -197,6 +201,7 @@ macro_rules! read_match {
         }
     };
 }
+pub use read_match;
 
 /// lookahead! is a macro that reads bytes from a cursor and returns the bytes.
 /// The cursor position is not changed.
@@ -204,7 +209,7 @@ macro_rules! read_match {
 /// # Example
 ///
 /// ```rust
-/// # use read_macro::lookahead;
+/// # use uka_util::cursor::lookahead;
 /// # use std::io::Cursor;
 /// #
 /// let mut cursor = Cursor::new(b"hello");
@@ -228,3 +233,4 @@ macro_rules! lookahead {
         })
     }};
 }
+pub use lookahead;
