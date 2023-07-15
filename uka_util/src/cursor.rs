@@ -1,5 +1,3 @@
-pub use bytes_macro;
-
 /// read! is a macro that reads bytes from a cursor.
 ///
 /// # Example
@@ -172,11 +170,11 @@ macro_rules! read_match {
         {
             $crate::read!($cursor, 1).and_then(|first| match &first {
                 $(
-                    $crate::bytes_macro::bytes_slice!($bytes, 0, 1) => {
-                        if $crate::bytes_macro::bytes_length!($bytes) == 1 {
+                    $crate::uka_macro::bytes_slice!($bytes, 0, 1) => {
+                        if $crate::uka_macro::bytes_length!($bytes) == 1 {
                             Ok($expr)
                         } else {
-                            $crate::read_expect!($cursor, $crate::bytes_macro::bytes_slice!($bytes, 1)).map(|_| $expr)
+                            $crate::read_expect!($cursor, $crate::uka_macro::bytes_slice!($bytes, 1)).map(|_| $expr)
                         }
                     },
                 )*
@@ -188,11 +186,11 @@ macro_rules! read_match {
         {
             $crate::read!($cursor, $len).and_then(|first| match &first {
                 $(
-                    $crate::bytes_macro::bytes_slice!($bytes, 0, $len) => {
-                        if $crate::bytes_macro::bytes_length!($bytes) == $len {
+                    $crate::uka_macro::bytes_slice!($bytes, 0, $len) => {
+                        if $crate::uka_macro::bytes_length!($bytes) == $len {
                             Ok($expr)
                         } else {
-                            $crate::read_expect!($cursor, $crate::bytes_macro::bytes_slice!($bytes, $len)).map(|_| $expr)
+                            $crate::read_expect!($cursor, $crate::uka_macro::bytes_slice!($bytes, $len)).map(|_| $expr)
                         }
                     },
                 )*
