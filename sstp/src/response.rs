@@ -1,5 +1,6 @@
+use crate::header::{HeaderMap, HeaderName, HeaderNameError, HeaderValue, HeaderValueError};
 use crate::parse::parse_response;
-use crate::{header, Charset, HeaderMap, HeaderName, HeaderValue, StatusCode, Version};
+use crate::{Charset, StatusCode, Version};
 use std::collections::HashMap;
 use uka_util::decode::{Decoder, Error as DecodeError};
 use uka_util::encode::{Encoder, Error as EncodeError};
@@ -244,9 +245,9 @@ pub enum Error {
     #[error("charset is required")]
     MissingCharset,
     #[error("{0}")]
-    InvalidHeaderName(#[from] header::name::Error),
+    InvalidHeaderName(#[from] HeaderNameError),
     #[error("{0}")]
-    FailedEncodeHeaderValue(#[from] header::value::Error),
+    FailedEncodeHeaderValue(#[from] HeaderValueError),
     #[error("{0}")]
     FailedEncodeAdditionalData(#[from] EncodeError),
 }

@@ -8,9 +8,7 @@ mod status;
 mod version;
 
 pub use charset::Charset;
-pub use header::map::HeaderMap;
-pub use header::name::{Error as HeaderNameError, HeaderName};
-pub use header::value::{Error as HeaderValueError, HeaderValue};
+pub use header::{HeaderMap, HeaderName, HeaderNameError, HeaderValue, HeaderValueError};
 pub use method::Method;
 pub use parse::Error;
 pub use status::StatusCode;

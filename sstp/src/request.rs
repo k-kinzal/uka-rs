@@ -1,11 +1,9 @@
 use crate::charset::Charset;
-use crate::header::map::HeaderMap;
-use crate::header::name::HeaderName;
-use crate::header::value::HeaderValue;
+use crate::header::{HeaderMap, HeaderName, HeaderNameError, HeaderValue, HeaderValueError};
 use crate::method::Method;
+use crate::parse;
 use crate::parse::parse_request;
 use crate::version::Version;
-use crate::{header, parse};
 use std::collections::HashMap;
 
 /// Request is a type that represents an SSTP request.
@@ -102,107 +100,107 @@ impl Request {
 
     /// Returns sender in SSTP header fields.
     pub fn sender(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::SENDER)
+        self.headers.get(&HeaderName::SENDER)
     }
 
     /// Returns event in SSTP header fields.
     pub fn event(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::EVENT)
+        self.headers.get(&HeaderName::EVENT)
     }
 
     /// Returns reference0 in SSTP header fields.
     pub fn reference0(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE0)
+        self.headers.get(&HeaderName::REFERENCE0)
     }
 
     /// Returns reference1 in SSTP header fields.
     pub fn reference1(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE1)
+        self.headers.get(&HeaderName::REFERENCE1)
     }
 
     /// Returns reference2 in SSTP header fields.
     pub fn reference2(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE2)
+        self.headers.get(&HeaderName::REFERENCE2)
     }
 
     /// Returns reference3 in SSTP header fields.
     pub fn reference3(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE3)
+        self.headers.get(&HeaderName::REFERENCE3)
     }
 
     /// Returns reference4 in SSTP header fields.
     pub fn reference4(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE4)
+        self.headers.get(&HeaderName::REFERENCE4)
     }
 
     /// Returns reference5 in SSTP header fields.
     pub fn reference5(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE5)
+        self.headers.get(&HeaderName::REFERENCE5)
     }
 
     /// Returns reference6 in SSTP header fields.
     pub fn reference6(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE6)
+        self.headers.get(&HeaderName::REFERENCE6)
     }
 
     /// Returns reference7 in SSTP header fields.
     pub fn reference7(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::REFERENCE7)
+        self.headers.get(&HeaderName::REFERENCE7)
     }
 
     /// Returns script in SSTP header fields.
     pub fn script(&self) -> Vec<&HeaderValue> {
-        self.headers.get_all(HeaderName::SCRIPT)
+        self.headers.get_all(&HeaderName::SCRIPT)
     }
 
     /// Returns option in SSTP header fields.
     pub fn option(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::OPTION)
+        self.headers.get(&HeaderName::OPTION)
     }
 
     /// Returns entry in SSTP header fields.
     pub fn entry(&self) -> Vec<&HeaderValue> {
-        self.headers.get_all(HeaderName::ENTRY)
+        self.headers.get_all(&HeaderName::ENTRY)
     }
 
     /// Returns hwnd in SSTP header fields.
     pub fn hwnd(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::HWND)
+        self.headers.get(&HeaderName::HWND)
     }
 
     /// Returns if_ghost in SSTP header fields.
     pub fn if_ghost(&self) -> Vec<&HeaderValue> {
-        self.headers.get_all(HeaderName::IF_GHOST)
+        self.headers.get_all(&HeaderName::IF_GHOST)
     }
 
     /// Returns command in SSTP header fields.
     pub fn command(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::COMMAND)
+        self.headers.get(&HeaderName::COMMAND)
     }
 
     /// Returns document in SSTP header fields.
     pub fn document(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::DOCUMENT)
+        self.headers.get(&HeaderName::DOCUMENT)
     }
 
     /// Returns songname in SSTP header fields.
     pub fn songname(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::SONGNAME)
+        self.headers.get(&HeaderName::SONGNAME)
     }
 
     /// Returns sentence in SSTP header fields.
     pub fn sentence(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::SENTENCE)
+        self.headers.get(&HeaderName::SENTENCE)
     }
 
     /// Returns port in SSTP header fields.
     pub fn port(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::PORT)
+        self.headers.get(&HeaderName::PORT)
     }
 
     /// Returns surface in SSTP header fields.
     pub fn surface(&self) -> Option<&HeaderValue> {
-        self.headers.get(HeaderName::SURFACE)
+        self.headers.get(&HeaderName::SURFACE)
     }
 
     /// Convert request to bytes.
@@ -233,9 +231,9 @@ pub enum Error {
     #[error("charset is required")]
     MissingCharset,
     #[error("{0}")]
-    InvalidHeaderName(#[from] header::name::Error),
+    InvalidHeaderName(#[from] HeaderNameError),
     #[error("{0}")]
-    FailedEncodeHeaderValue(#[from] header::value::Error),
+    FailedEncodeHeaderValue(#[from] HeaderValueError),
 }
 
 #[derive(Default)]

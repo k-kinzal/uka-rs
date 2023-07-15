@@ -1,10 +1,9 @@
-use crate::header::map::HeaderMap;
-use crate::header::name::HeaderName;
+use crate::header::{HeaderMap, HeaderName, HeaderNameError, HeaderValueError};
 use crate::method::Method;
 use crate::request::Request;
 use crate::response::{AdditionalData, Response};
 use crate::version::Version;
-use crate::{charset, header, Charset, StatusCode};
+use crate::{charset, Charset, StatusCode};
 use read_macro::{lookahead, read_expect, read_match, read_repeat, read_until};
 use std::io;
 use std::io::Cursor;
@@ -29,7 +28,7 @@ pub enum Error {
     InvalidStatusCode,
 
     #[error("invalid header name: {0:?}")]
-    InvalidHeaderName(#[from] header::name::Error),
+    InvalidHeaderName(#[from] HeaderNameError),
 
     #[error("invalid header: {0:?}: {1:?}")]
     InvalidHeaderValue(HeaderName, String),
@@ -38,7 +37,7 @@ pub enum Error {
     MissingHeader(HeaderName),
 
     #[error("{1} in `{0}` header")]
-    FailedDecode(HeaderName, #[source] header::value::Error),
+    FailedDecode(HeaderName, #[source] HeaderValueError),
 
     #[error("{0}")]
     UnsupportedCharset(#[from] charset::Error),
@@ -64,7 +63,7 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
     skip_newline(&mut cursor)?;
     let headers = parse_headers(&mut cursor)?;
     let charset = headers
-        .get(HeaderName::CHARSET)
+        .get(&HeaderName::CHARSET)
         .ok_or_else(|| Error::MissingHeader(HeaderName::CHARSET))
         .and_then(|v| {
             v.text()
@@ -91,7 +90,7 @@ pub fn parse_response(input: &[u8]) -> Result<Response> {
     skip_newline(&mut cursor)?;
     let headers = parse_headers(&mut cursor)?;
     let charset = headers
-        .get(HeaderName::CHARSET)
+        .get(&HeaderName::CHARSET)
         .ok_or_else(|| Error::MissingHeader(HeaderName::CHARSET))
         .and_then(|v| {
             v.text()
@@ -165,7 +164,10 @@ fn parse_headers(cursor: &mut Cursor<&[u8]>) -> Result<HeaderMap> {
         skip_spaces(cursor)?;
         let value = read_until!(cursor, b"\r\n").map_err(Error::from)?;
 
-        map.insert(HeaderName::from_bytes(&name).map_err(Error::from)?, value)
+        map.insert(
+            HeaderName::from_bytes(&name).map_err(Error::from)?,
+            value.into(),
+        );
     }
     Ok(map)
 }
@@ -461,7 +463,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let value = headers
-            .get(HeaderName::from_static(
+            .get(&HeaderName::from_static(
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
             )?)
             .and_then(|v| v.text().ok())
@@ -478,7 +480,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let value = headers
-            .get(HeaderName::from_static("0123456789")?)
+            .get(&HeaderName::from_static("0123456789")?)
             .and_then(|v| v.text().ok())
             .unwrap();
         assert_eq!(value, "foo");
@@ -493,7 +495,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let value = headers
-            .get(HeaderName::from_static("!#$%&'*+-.^_`|~")?)
+            .get(&HeaderName::from_static("!#$%&'*+-.^_`|~")?)
             .and_then(|v| v.text().ok())
             .unwrap();
         assert_eq!(value, "foo");
@@ -526,7 +528,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let sender = headers
-            .get(HeaderName::SENDER)
+            .get(&HeaderName::SENDER)
             .and_then(|v| v.text().ok())
             .unwrap();
         assert_eq!(sender, "foo");
@@ -547,7 +549,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let sender = headers
-            .get(HeaderName::SENDER)
+            .get(&HeaderName::SENDER)
             .and_then(|v| v.text_with_charset(Charset::SHIFT_JIS).ok())
             .unwrap();
         assert_eq!(sender, "あいうえお");
@@ -568,7 +570,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let sender = headers
-            .get(HeaderName::SENDER)
+            .get(&HeaderName::SENDER)
             .and_then(|v| v.text_with_charset(Charset::ISO2022JP).ok())
             .unwrap();
         assert_eq!(sender, "あいうえお");
@@ -589,7 +591,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let sender = headers
-            .get(HeaderName::SENDER)
+            .get(&HeaderName::SENDER)
             .and_then(|v| v.text_with_charset(Charset::EUC_JP).ok())
             .unwrap();
         assert_eq!(sender, "あいうえお");
@@ -610,7 +612,7 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let sender = headers
-            .get(HeaderName::SENDER)
+            .get(&HeaderName::SENDER)
             .and_then(|v| v.text_with_charset(Charset::UTF8).ok())
             .unwrap();
         assert_eq!(sender, "あいうえお");
@@ -630,11 +632,11 @@ mod tests {
         let headers = parse_headers(&mut cursor)?;
 
         let sender = headers
-            .get(HeaderName::SENDER)
+            .get(&HeaderName::SENDER)
             .and_then(|v| v.text().ok())
             .unwrap();
         let charset = headers
-            .get(HeaderName::CHARSET)
+            .get(&HeaderName::CHARSET)
             .and_then(|v| v.text().ok())
             .unwrap();
         assert_eq!(sender, "foo");
@@ -788,7 +790,7 @@ mod tests {
         assert_eq!(
             response
                 .headers()
-                .get(HeaderName::SCRIPT)
+                .get(&HeaderName::SCRIPT)
                 .and_then(|v| v.text_with_charset(response.charset()).ok())
                 .unwrap(),
             "\\h\\s0テストー。\\u\\s[10]テストやな。"
