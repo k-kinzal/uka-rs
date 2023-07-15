@@ -41,7 +41,7 @@ impl Parse for BytesSliceInput {
 /// # Example
 ///
 /// ```rust
-/// # use bytes_macro::bytes_slice;
+/// # use uka_macro::bytes_slice;
 /// #
 /// assert_eq!(bytes_slice!(b"hello", 1), b"ello");
 /// assert_eq!(bytes_slice!(b"hello", 1, 4), b"ell");
@@ -66,7 +66,7 @@ pub fn bytes_slice(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust
-/// # use bytes_macro::bytes_slice_length;
+/// # use uka_macro::bytes_slice_length;
 /// #
 /// assert_eq!(bytes_slice_length!(b"hello", 1), 4);
 /// assert_eq!(bytes_slice_length!(b"hello", 1, 4), 3);
@@ -91,7 +91,7 @@ pub fn bytes_slice_length(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust
-/// # use bytes_macro::bytes_length;
+/// # use uka_macro::bytes_length;
 /// #
 /// assert_eq!(bytes_length!(b"hello"), 5);
 /// ```
