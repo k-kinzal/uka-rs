@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     assert_eq!(
         response
             .headers()
-            .get(HeaderName::SCRIPT)
+            .get(&HeaderName::SCRIPT)
             .and_then(|v| v.text_with_charset(response.charset()).ok()),
         Some("\\h\\s0テストー。\\u\\s[10]テストやな。".to_string())
     );

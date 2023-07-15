@@ -144,7 +144,7 @@ fn spec_character_set_for_request_header_names_is_based_on_rfc_7230() -> Result<
     assert_eq!(
         request
             .headers()
-            .get(HeaderName::from_static(name)?)
+            .get(&HeaderName::from_static(name)?)
             .unwrap()
             .text()?,
         "foo"
@@ -173,7 +173,7 @@ fn spec_character_set_for_response_header_names_is_based_on_rfc_7230() -> Result
     assert_eq!(
         request
             .headers()
-            .get(HeaderName::from_static(name)?)
+            .get(&HeaderName::from_static(name)?)
             .unwrap()
             .text()?,
         "foo"
