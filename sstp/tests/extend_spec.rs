@@ -1,10 +1,10 @@
 extern crate sstp;
 
 use anyhow::Result;
-use encoding_rs::SHIFT_JIS;
 use sstp::request::Request;
 use sstp::response::Response;
 use sstp::{Charset, HeaderName, StatusCode, Version};
+use uka_util::encode::Encoder;
 
 /// Undefined specification for materia.
 ///
@@ -44,13 +44,10 @@ fn spec_allow_zero_spaces_after_the_header_delimiter() -> Result<()> {
     let input = [
         b"SEND SSTP/1.1\r\n".to_vec(),
         b"Sender:".to_vec(),
-        SHIFT_JIS.encode("カードキャプター").0.to_vec(),
+        Encoder::encode_sjis("カードキャプター")?,
         b"\r\n".to_vec(),
         b"Script:".to_vec(),
-        SHIFT_JIS
-            .encode("\\h\\s0汝のあるべき姿に戻れ。\\e")
-            .0
-            .to_vec(),
+        Encoder::encode_sjis("\\h\\s0汝のあるべき姿に戻れ。\\e")?,
         b"\r\n".to_vec(),
         b"Option:nodescript,notranslate\r\n".to_vec(),
         b"Charset:Shift_JIS\r\n".to_vec(),
@@ -92,13 +89,10 @@ fn spec_allow_one_or_more_spaces_after_the_header_delimiter() -> Result<()> {
     let input = [
         b"SEND SSTP/1.1\r\n".to_vec(),
         b"Sender: ".to_vec(),
-        SHIFT_JIS.encode("カードキャプター").0.to_vec(),
+        Encoder::encode_sjis("カードキャプター")?,
         b"\r\n".to_vec(),
         b"Script:  ".to_vec(),
-        SHIFT_JIS
-            .encode("\\h\\s0汝のあるべき姿に戻れ。\\e")
-            .0
-            .to_vec(),
+        Encoder::encode_sjis("\\h\\s0汝のあるべき姿に戻れ。\\e")?,
         b"\r\n".to_vec(),
         b"Option:   nodescript,notranslate\r\n".to_vec(),
         b"Charset:    Shift_JIS\r\n".to_vec(),

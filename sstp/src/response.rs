@@ -1,10 +1,8 @@
-use crate::decode::Decoder;
-use crate::encode::Encoder;
 use crate::parse::parse_response;
-use crate::{
-    decode, encode, header, Charset, HeaderMap, HeaderName, HeaderValue, StatusCode, Version,
-};
+use crate::{header, Charset, HeaderMap, HeaderName, HeaderValue, StatusCode, Version};
 use std::collections::HashMap;
+use uka_util::decode::{Decoder, Error as DecodeError};
+use uka_util::encode::{Encoder, Error as EncodeError};
 
 /// AdditionalData is data that will be added in the SSTP response if needed.
 ///
@@ -24,7 +22,7 @@ impl AdditionalData {
     /// let data = AdditionalData::from(b"sakura".to_vec());
     /// assert_eq!(data.text().unwrap(), "sakura");
     /// ```
-    pub fn text(&self) -> Result<String, decode::Error> {
+    pub fn text(&self) -> Result<String, DecodeError> {
         self.text_with_charset(Charset::ASCII)
     }
 
@@ -36,7 +34,7 @@ impl AdditionalData {
     /// let data = AdditionalData::from([130, 179, 130, 173, 130, 231].to_vec());
     /// assert_eq!(data.text_with_charset(Charset::SHIFT_JIS).unwrap(), "さくら");
     /// ```
-    pub fn text_with_charset(&self, charset: Charset) -> Result<String, decode::Error> {
+    pub fn text_with_charset(&self, charset: Charset) -> Result<String, DecodeError> {
         match self {
             AdditionalData::Empty => Ok(String::new()),
             AdditionalData::Text(bytes) => {
@@ -59,7 +57,7 @@ impl AdditionalData {
     /// let data = AdditionalData::from_static("sakura").unwrap();
     /// matches!(data, AdditionalData::Text(bytes) if bytes == b"sakura");
     /// ```
-    pub fn from_static(s: &str) -> Result<Self, encode::Error> {
+    pub fn from_static(s: &str) -> Result<Self, EncodeError> {
         Self::from_static_with_charset(s, Charset::ASCII)
     }
 
@@ -71,7 +69,7 @@ impl AdditionalData {
     /// let data = AdditionalData::from_static_with_charset("さくら", Charset::SHIFT_JIS).unwrap();
     /// matches!(data, AdditionalData::Text(bytes) if bytes == [130, 179, 130, 173, 130, 231]);
     /// ```
-    pub fn from_static_with_charset(s: &str, charset: Charset) -> Result<Self, encode::Error> {
+    pub fn from_static_with_charset(s: &str, charset: Charset) -> Result<Self, EncodeError> {
         if s.is_empty() {
             Ok(Self::Empty)
         } else {
@@ -146,17 +144,17 @@ impl Response {
     /// Parse a bytes into a Response.
     ///
     /// ```rust
-    /// # use encoding_rs::UTF_8;
+    /// # use uka_util::encode::Encoder;
     /// # use sstp::{Charset, HeaderName, Method, StatusCode, Version};
     /// # use sstp::response::Response;
     /// let input = [
     ///     b"SSTP/1.1 200 OK\r\n".to_vec(),
     ///     b"Charset: UTF-8\r\n".to_vec(),
     ///     b"Script: ".to_vec(),
-    ///     UTF_8.encode("\\h\\s0テストー。\\u\\s[10]テストやな。").0.to_vec(),
+    ///     Encoder::encode_utf8("\\h\\s0テストー。\\u\\s[10]テストやな。").unwrap(),
     ///     b"\r\n".to_vec(),
     ///     b"\r\n".to_vec(),
-    ///     UTF_8.encode("追加データはここ").0.to_vec(),
+    ///     Encoder::encode_utf8("追加データはここ").unwrap(),
     ///     b"\r\n".to_vec(),
     ///     b"\r\n".to_vec(),
     /// ].concat();
@@ -250,7 +248,7 @@ pub enum Error {
     #[error("{0}")]
     FailedEncodeHeaderValue(#[from] header::value::Error),
     #[error("{0}")]
-    FailedEncodeAdditionalData(#[from] encode::Error),
+    FailedEncodeAdditionalData(#[from] EncodeError),
 }
 
 #[derive(Default)]

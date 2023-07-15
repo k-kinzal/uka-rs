@@ -69,8 +69,7 @@ impl Encoder {
 
 #[cfg(test)]
 mod tests {
-    use crate::encode::{Encoder, Error};
-    use anyhow::Result;
+    use super::*;
 
     const SHIFT_JIS_BYTES: [u8; 6] = [130, 179, 130, 173, 130, 231];
     const ISO_2022_JP_BYTES: [u8; 12] = [27, 36, 66, 36, 53, 36, 47, 36, 105, 27, 40, 66];

@@ -1,6 +1,6 @@
-use crate::decode::Decoder;
-use crate::encode::Encoder;
-use crate::{decode, encode, Charset};
+use crate::Charset;
+use uka_util::decode::{Decoder, Error as DecodeError};
+use uka_util::encode::{Encoder, Error as EncodeError};
 
 /// Error occurs when serializing/deserializing HeaderValue.
 #[derive(thiserror::Error, Debug)]
@@ -9,10 +9,10 @@ pub enum Error {
     UnprintableCharacters(String),
 
     #[error("{0}")]
-    FailedEncode(#[from] encode::Error),
+    FailedEncode(#[from] EncodeError),
 
     #[error("{0}")]
-    FailedDecode(#[from] decode::Error),
+    FailedDecode(#[from] DecodeError),
 }
 
 type Result<T> = std::result::Result<T, Error>;
