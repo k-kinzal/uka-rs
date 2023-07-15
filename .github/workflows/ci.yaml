@@ -25,8 +25,7 @@ jobs:
         with:
           shared-key: stable20230226
       - name: Cargo build
-        run: |
-          RUST_BACKTRACE=full cargo test --no-run
+        run: cargo test --no-run
       - name: Clear the cargo caches
         shell: bash
         run: |
