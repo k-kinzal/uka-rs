@@ -1,6 +1,4 @@
 mod charset;
-mod decode;
-mod encode;
 mod header;
 mod method;
 mod parse;

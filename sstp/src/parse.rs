@@ -209,8 +209,8 @@ fn eof(cursor: &mut Cursor<&[u8]>) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::encode::Encoder;
     use anyhow::Result;
+    use uka_util::encode::Encoder;
 
     #[test]
     fn test_parse_method_pass_notify() -> Result<()> {

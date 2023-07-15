@@ -38,16 +38,16 @@ impl Request {
     /// Parse a bytes into a Request.
     ///
     /// ```rust
-    /// # use encoding_rs::SHIFT_JIS;
+    /// # use uka_util::encode::Encoder;
     /// # use sstp::{Charset, HeaderName, Method, Version};
     /// # use sstp::request::Request;
     /// let input = [
     ///     b"SEND SSTP/1.1\r\n".to_vec(),
     ///     b"Sender:".to_vec(),
-    ///     SHIFT_JIS.encode("カードキャプター").0.to_vec(),
+    ///     Encoder::encode_sjis("カードキャプター").unwrap(),
     ///     b"\r\n".to_vec(),
     ///     b"Script:".to_vec(),
-    ///     SHIFT_JIS.encode("\\h\\s0汝のあるべき姿に戻れ。\\e").0.to_vec(),
+    ///     Encoder::encode_sjis("\\h\\s0汝のあるべき姿に戻れ。\\e").unwrap(),
     ///     b"\r\n".to_vec(),
     ///     b"Option:nodescript,notranslate\r\n".to_vec(),
     ///     b"Charset:Shift_JIS\r\n".to_vec(),
