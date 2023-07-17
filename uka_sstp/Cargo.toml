@@ -10,5 +10,5 @@ thiserror = "1.0.43"
 uka_util = { path = "../uka_util" }
 
 [dev-dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.72"
 rstest = "0.18.1"
