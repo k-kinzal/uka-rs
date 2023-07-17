@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "uka_macro",
+    "uka_shiori",
     "uka_sstp",
     "uka_util",
 ]
