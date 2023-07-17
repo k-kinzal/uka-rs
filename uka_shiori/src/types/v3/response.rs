@@ -5,7 +5,7 @@ use crate::types::v3::header::{
 use crate::types::v3::parse::{parse_response, Error as ParseError};
 use crate::types::v3::status::StatusCode;
 use crate::types::v3::version::Version;
-use std::collections::HashMap;
+use uka_util::bag::OrderedBag;
 use uka_util::encode::Error as EncodeError;
 
 /// `Response` is a type that represents an SHIORI v3 request.
@@ -179,7 +179,7 @@ pub enum Error {
 struct Parts {
     version: Option<Version>,
     status_code: Option<StatusCode>,
-    headers: HashMap<String, Vec<String>>,
+    headers: OrderedBag<String, String>,
     charset: Option<Charset>,
 }
 
@@ -222,11 +222,7 @@ impl Builder {
         V: Into<String>,
     {
         self.and_then(|mut inner| {
-            inner
-                .headers
-                .entry(name.into())
-                .or_default()
-                .push(value.into());
+            inner.headers.insert(name.into(), value.into());
             Ok(inner)
         })
     }
@@ -236,9 +232,7 @@ impl Builder {
         self.and_then(|mut inner| {
             inner
                 .headers
-                .entry(HeaderName::CHARSET.to_string())
-                .or_default()
-                .push(charset.to_string());
+                .insert(HeaderName::CHARSET.to_string(), charset.to_string());
             if inner.charset.is_some() {
                 Ok(Parts {
                     headers: inner.headers,
@@ -257,33 +251,24 @@ impl Builder {
     /// Build SHIORI response.
     pub fn build(self) -> Result<Response, Error> {
         let inner = self.inner?;
-        let charset = inner.charset.ok_or(Error::MissingCharset)?;
+        let charset = inner.charset.unwrap_or(Charset::ASCII);
         Ok(Response {
             version: inner.version.ok_or(Error::MissingVersion)?,
             status_code: inner.status_code.ok_or(Error::MissingStatusCode)?,
-            headers: inner.headers.iter().fold(
-                Ok(HeaderMap::with_capacity(inner.headers.len())),
-                |acc, (name, value)| {
-                    value.iter().fold(acc, |acc, value| {
-                        let name = HeaderName::from_static(name).map_err(Error::from);
-                        let value = if value.chars().all(|c| c.is_ascii_graphic()) {
-                            HeaderValue::from_static(value).map_err(Error::from)
-                        } else {
-                            HeaderValue::from_static_with_charset(value, charset)
-                                .map_err(Error::from)
-                        };
-                        acc.and_then(|mut headers| {
-                            name.and_then(|name| value.map(|value| (name, value))).map(
-                                |(name, value)| {
-                                    headers.insert(name, value);
-                                    headers
-                                },
-                            )
+            headers: inner
+                .headers
+                .into_iter()
+                .map(|(k, v)| {
+                    HeaderName::from_static(&k)
+                        .map_err(Error::InvalidHeaderName)
+                        .and_then(|name| {
+                            HeaderValue::from_static_with_charset(&v, charset)
+                                .map(|value| (name, value))
+                                .map_err(Error::FailedEncodeHeaderValue)
                         })
-                    })
-                },
-            )?,
-            charset: inner.charset.ok_or(Error::MissingCharset)?,
+                })
+                .collect::<Result<HeaderMap, Error>>()?,
+            charset,
         })
     }
 
@@ -294,5 +279,42 @@ impl Builder {
         Builder {
             inner: self.inner.and_then(func),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_response_parse_and_builder_will_be_same() -> anyhow::Result<()> {
+        let input = [
+            b"SHIORI/3.0 204 No Content\r\n".to_vec(),
+            b"Sender: F.I.R.S.T\r\n".to_vec(),
+            b"Value: hoge\r\n".to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let response1 = Response::parse(&input)?;
+        let response2 = Response::builder()
+            .version(Version::SHIORI_30)
+            .status_code(StatusCode::NO_CONTENT)
+            .header(HeaderName::SENDER, "F.I.R.S.T")
+            .header(HeaderName::VALUE, "hoge")
+            .build()?;
+
+        assert_eq!(response1.version(), response2.version());
+        assert_eq!(response1.charset(), response2.charset());
+        assert_eq!(response1.sender(), response2.sender());
+        assert_eq!(response1.value(), response2.value());
+        assert_eq!(
+            response1.as_bytes(),
+            response2.as_bytes(),
+            "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
+            String::from_utf8_lossy(&response1.as_bytes()),
+            String::from_utf8_lossy(&response2.as_bytes())
+        );
+
+        Ok(())
     }
 }

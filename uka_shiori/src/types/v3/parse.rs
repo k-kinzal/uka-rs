@@ -5,6 +5,7 @@ use crate::types::v3::request::Request;
 use crate::types::v3::response::Response;
 use crate::types::v3::status::StatusCode;
 use crate::types::v3::version::Version;
+use crate::types::v3::ParseError;
 use std::io::Cursor;
 use uka_util::cursor::{lookahead, read_expect, read_match, read_repeat, read_until};
 
@@ -45,7 +46,8 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
             v.text()
                 .map_err(|e| Error::FailedDecode(HeaderName::CHARSET, e))
         })
-        .and_then(|v| Charset::from_string(v).map_err(Error::from))?;
+        .and_then(|v| Charset::from_string(v).map_err(Error::from))
+        .or_else(|_| Ok::<Charset, ParseError>(Charset::ASCII))?;
     skip_newline(&mut cursor)?;
     eof(&mut cursor)?;
 
@@ -71,7 +73,8 @@ pub fn parse_response(input: &[u8]) -> Result<Response> {
             v.text()
                 .map_err(|e| Error::FailedDecode(HeaderName::CHARSET, e))
         })
-        .and_then(|v| Charset::from_string(v).map_err(Error::from))?;
+        .and_then(|v| Charset::from_string(v).map_err(Error::from))
+        .or_else(|_| Ok::<Charset, ParseError>(Charset::ASCII))?;
     skip_newline(&mut cursor)?;
     eof(&mut cursor)?;
 

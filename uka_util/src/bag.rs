@@ -119,6 +119,16 @@ impl<K: Eq + Hash, V> OrderedBag<K, V> {
         self.map.entry(k).or_default().push(pos);
     }
 
+    /// Returns the number of elements in the bag.
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Returns true if the bag contains no elements.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
     /// Returns an iterator over the bag.
     /// The iterator will yield tuples in the order they were inserted into the bag.
     ///
@@ -154,6 +164,16 @@ impl<K: Eq + Hash + Clone, V> From<Vec<(K, V)>> for OrderedBag<K, V> {
     fn from(entries: Vec<(K, V)>) -> Self {
         let mut bag = Self::with_capacity(entries.len());
         for (k, v) in entries {
+            bag.insert(k, v);
+        }
+        bag
+    }
+}
+
+impl<K: Eq + Hash + Clone, V> FromIterator<(K, V)> for OrderedBag<K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        let mut bag = Self::new();
+        for (k, v) in iter {
             bag.insert(k, v);
         }
         bag

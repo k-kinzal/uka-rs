@@ -2,8 +2,8 @@ use crate::types::v3;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ResponseParseError {
-    #[error("failed parse: invalid request")]
-    InvalidRequest,
+    #[error("failed parse: invalid response")]
+    InvalidResponse,
 
     #[error("{0}")]
     V3(#[from] v3::ParseError),
@@ -48,10 +48,10 @@ impl Response {
             Ok(Response::V3(v3::Response::parse(buf)?))
         } else if b"SHIORI/2" == buf[..8].as_ref() {
             // parse as SHIORI/2.x
-            Err(ResponseParseError::InvalidRequest)
+            Err(ResponseParseError::InvalidResponse)
         } else {
             // parse as SHIORI/1.x
-            Err(ResponseParseError::InvalidRequest)
+            Err(ResponseParseError::InvalidResponse)
         }
     }
 

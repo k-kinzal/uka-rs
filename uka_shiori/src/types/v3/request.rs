@@ -4,7 +4,7 @@ use crate::types::v3::header::{
 };
 use crate::types::v3::parse::{parse_request, Error as ParseError};
 use crate::types::v3::{Method, Version};
-use std::collections::HashMap;
+use uka_util::bag::OrderedBag;
 
 /// Request is a type that represents an SHIORI v3 request.
 ///
@@ -74,8 +74,8 @@ impl Request {
     ///    .unwrap();
     /// assert_eq!(request.method(), Method::GET);
     /// ```
-    pub fn builder() -> Builder {
-        Builder::new()
+    pub fn builder() -> RequestBuilder {
+        RequestBuilder::new()
     }
 
     /// Returns SHIORI method.
@@ -190,16 +190,16 @@ pub enum Error {
 struct Parts {
     method: Option<Method>,
     version: Option<Version>,
-    headers: HashMap<String, Vec<String>>,
+    headers: OrderedBag<String, String>,
     charset: Option<Charset>,
 }
 
 /// Builder for SHIORI v3 request.
-pub struct Builder {
+pub struct RequestBuilder {
     inner: Result<Parts, Error>,
 }
 
-impl Builder {
+impl RequestBuilder {
     pub(crate) fn new() -> Self {
         Self {
             inner: Ok(Parts::default()),
@@ -211,10 +211,9 @@ impl Builder {
     /// # Examples
     ///
     /// ```rust
-    /// # use uka_shiori::types::v3::{Request, Method, Version, HeaderName, Charset};
+    /// # use uka_shiori::types::v3::{RequestBuilder, Method, Version, HeaderName, Charset};
     /// #
-    /// let request = Request::builder()
-    ///   .notify(Version::SHIORI_30)
+    /// let request = RequestBuilder::notify(Version::SHIORI_30)
     ///   .header(HeaderName::SENDER, "Materia")
     ///   .header(HeaderName::ID, "OnInitialize")
     ///   .header(HeaderName::REFERENCE0, "Reference0")
@@ -223,8 +222,10 @@ impl Builder {
     ///   .unwrap();
     /// assert_eq!(request.method(), Method::NOTIFY);
     /// ```
-    pub fn notify(self, version: Version) -> Self {
-        self.method(Method::NOTIFY).version(version)
+    pub fn notify(version: Version) -> Self {
+        RequestBuilder::new()
+            .version(version)
+            .method(Method::NOTIFY)
     }
 
     /// Build GET request.
@@ -232,10 +233,9 @@ impl Builder {
     /// # Examples
     ///
     /// ```rust
-    /// # use uka_shiori::types::v3::{Request, Method, Version, HeaderName, Charset};
+    /// # use uka_shiori::types::v3::{RequestBuilder, Method, Version, HeaderName, Charset};
     /// #
-    /// let request = Request::builder()
-    ///   .get(Version::SHIORI_30)
+    /// let request = RequestBuilder::get(Version::SHIORI_30)
     ///   .header(HeaderName::SENDER, "Materia")
     ///   .header(HeaderName::ID, "version")
     ///   .charset(Charset::ASCII)
@@ -243,8 +243,8 @@ impl Builder {
     ///   .unwrap();
     /// assert_eq!(request.method(), Method::GET);
     /// ```
-    pub fn get(self, version: Version) -> Self {
-        self.method(Method::GET).version(version)
+    pub fn get(version: Version) -> Self {
+        RequestBuilder::new().version(version).method(Method::GET)
     }
 
     /// Set SHIORI method.
@@ -274,11 +274,7 @@ impl Builder {
         V: Into<String>,
     {
         self.and_then(|mut inner| {
-            inner
-                .headers
-                .entry(name.into())
-                .or_default()
-                .push(value.into());
+            inner.headers.insert(name.into(), value.into());
             Ok(inner)
         })
     }
@@ -288,9 +284,7 @@ impl Builder {
         self.and_then(|mut inner| {
             inner
                 .headers
-                .entry(HeaderName::CHARSET.to_string())
-                .or_default()
-                .push(charset.to_string());
+                .insert(HeaderName::CHARSET.to_string(), charset.to_string());
             if inner.charset.is_some() {
                 Ok(Parts {
                     headers: inner.headers,
@@ -309,33 +303,25 @@ impl Builder {
     /// Build SHIORI request.
     pub fn build(self) -> Result<Request, Error> {
         let inner = self.inner?;
-        let charset = inner.charset.ok_or(Error::MissingCharset)?;
+        let charset = inner.charset.unwrap_or(Charset::ASCII);
         Ok(Request {
             method: inner.method.ok_or(Error::MissingMethod)?,
             version: inner.version.ok_or(Error::MissingVersion)?,
-            headers: inner.headers.iter().fold(
-                Ok(HeaderMap::with_capacity(inner.headers.len())),
-                |acc, (name, value)| {
-                    value.iter().fold(acc, |acc, value| {
-                        let name = HeaderName::from_static(name).map_err(Error::from);
-                        let value = if value.chars().all(|c| c.is_ascii_graphic()) {
-                            HeaderValue::from_static(value).map_err(Error::from)
-                        } else {
-                            HeaderValue::from_static_with_charset(value, charset)
-                                .map_err(Error::from)
-                        };
-                        acc.and_then(|mut headers| {
-                            name.and_then(|name| value.map(|value| (name, value))).map(
-                                |(name, value)| {
-                                    headers.insert(name, value);
-                                    headers
-                                },
-                            )
+            headers: inner
+                .headers
+                .into_iter()
+                .map(|(k, v)| {
+                    HeaderName::from_static(&k)
+                        .map_err(Error::InvalidHeaderName)
+                        .and_then(|name| {
+                            HeaderValue::from_static_with_charset(&v, charset)
+                                .map(|value| (name, value))
+                                .map_err(Error::FailedEncodeHeaderValue)
                         })
-                    })
-                },
-            )?,
-            charset: inner.charset.ok_or(Error::MissingCharset)?,
+                })
+                .collect::<Result<HeaderMap, Error>>()?,
+
+            charset,
         })
     }
 
@@ -343,8 +329,58 @@ impl Builder {
     where
         F: FnOnce(Parts) -> Result<Parts, Error>,
     {
-        Builder {
+        RequestBuilder {
             inner: self.inner.and_then(func),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_request_parse_and_builder_will_be_same() -> anyhow::Result<()> {
+        let input = [
+            b"GET SHIORI/3.0\r\n".to_vec(),
+            b"Sender: Materia\r\n".to_vec(),
+            b"ID: hoge\r\n".to_vec(),
+            b"Reference0: uge\r\n".to_vec(),
+            b"\r\n".to_vec(),
+        ]
+        .concat();
+        let request1 = Request::parse(&input)?;
+        let request2 = Request::builder()
+            .version(Version::SHIORI_30)
+            .method(Method::GET)
+            .header(HeaderName::SENDER, "Materia")
+            .header(HeaderName::ID, "hoge")
+            .header(HeaderName::REFERENCE0, "uge")
+            .build()?;
+
+        assert_eq!(request1.method(), request2.method());
+        assert_eq!(request1.version(), request2.version());
+        assert_eq!(request1.charset(), request2.charset());
+        assert_eq!(request1.sender(), request2.sender());
+        assert_eq!(request1.id(), request2.id());
+        assert_eq!(request1.reference0(), request2.reference0());
+        assert_eq!(request1.reference1(), request2.reference1());
+        assert_eq!(request1.reference2(), request2.reference2());
+        assert_eq!(request1.reference3(), request2.reference3());
+        assert_eq!(request1.reference4(), request2.reference4());
+        assert_eq!(request1.reference5(), request2.reference5());
+        assert_eq!(request1.reference6(), request2.reference6());
+        assert_eq!(request1.reference7(), request2.reference7());
+        assert_eq!(request1.security_level(), request2.security_level());
+
+        assert_eq!(
+            request1.as_bytes(),
+            request2.as_bytes(),
+            "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
+            String::from_utf8_lossy(&request1.as_bytes()),
+            String::from_utf8_lossy(&request2.as_bytes())
+        );
+
+        Ok(())
     }
 }
