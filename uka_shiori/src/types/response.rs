@@ -13,6 +13,7 @@ pub enum ResponseParseError {
 ///
 /// This type supports multiple versions of SHIORI.
 /// If you want to support only a specific version, use `uka_shiori::types::v3::Response` and a specific version explicitly.
+#[derive(Debug)]
 pub enum Response {
     V3(v3::Response),
 }

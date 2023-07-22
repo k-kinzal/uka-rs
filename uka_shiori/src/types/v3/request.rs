@@ -26,6 +26,7 @@ use uka_util::bag::OrderedBag;
 ///     .unwrap();
 /// assert_eq!(request.method(), Method::GET);
 /// ```
+#[derive(Debug)]
 pub struct Request {
     pub(crate) method: Method,
     pub(crate) version: Version,

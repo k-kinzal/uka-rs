@@ -13,6 +13,7 @@ pub enum RequestParseError {
 ///
 /// This type supports multiple versions of SHIORI.
 /// If you want to support only a specific version, use `uka_shiori::types::v3::Request` and a specific version explicitly.
+#[derive(Debug)]
 pub enum Request {
     V3(v3::Request),
 }
