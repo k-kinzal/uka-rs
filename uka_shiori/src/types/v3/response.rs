@@ -28,6 +28,7 @@ use uka_util::encode::Error as EncodeError;
 ///   .unwrap();
 /// assert_eq!(response.version(), Version::SHIORI_30);
 /// ```
+#[derive(Debug)]
 pub struct Response {
     pub(crate) version: Version,
     pub(crate) status_code: StatusCode,
