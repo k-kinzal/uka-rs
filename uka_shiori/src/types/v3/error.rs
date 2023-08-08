@@ -1,3 +1,6 @@
+use crate::types::v3::response::{IntoResponse, Response};
+use crate::types::v3::status::StatusCode;
+use crate::types::v3::version::Version;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 
@@ -12,6 +15,10 @@ pub struct ShioriError {
 
     /// Optional context information associated with the error.
     context: Option<String>,
+
+    version: Option<Version>,
+
+    status_code: Option<StatusCode>,
 }
 
 impl ShioriError {
@@ -23,7 +30,7 @@ impl ShioriError {
     /// # Examples
     ///
     /// ```rust
-    /// # use uka_shiori::runtime::ShioriError;
+    /// # use uka_shiori::types::v3::ShioriError;
     /// #
     /// let e = ShioriError::new("something went wrong");
     /// assert_eq!(format!("{e}"), "something went wrong");
@@ -32,6 +39,8 @@ impl ShioriError {
         Self {
             source: e.into(),
             context: None,
+            version: None,
+            status_code: None,
         }
     }
 
@@ -43,7 +52,19 @@ impl ShioriError {
         Self {
             source: Box::new(error),
             context: None,
+            version: None,
+            status_code: None,
         }
+    }
+
+    pub fn with_version(mut self, version: Version) -> Self {
+        self.version = Some(version);
+        self
+    }
+
+    pub fn with_status_code(mut self, status_code: StatusCode) -> Self {
+        self.status_code = Some(status_code);
+        self
     }
 
     /// Attaches a context message to the `ShioriError`.
@@ -133,6 +154,33 @@ impl From<ShioriError> for Box<dyn std::error::Error + Sync> {
 impl From<ShioriError> for Box<dyn std::error::Error> {
     fn from(value: ShioriError) -> Self {
         value.source
+    }
+}
+
+impl<T> From<ShioriError> for Result<T, ShioriError> {
+    fn from(value: ShioriError) -> Self {
+        Err(value)
+    }
+}
+
+impl From<ShioriError> for Response {
+    fn from(value: ShioriError) -> Self {
+        value.into_response()
+    }
+}
+
+impl IntoResponse for ShioriError {
+    fn into_response(self) -> Response {
+        let version = self.version.unwrap_or(Version::SHIORI_30);
+        let status_code = self
+            .status_code
+            .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+        Response::builder()
+            .version(version)
+            .status_code(status_code)
+            .build()
+            .expect("failed to build error response")
+            .into()
     }
 }
 
