@@ -1,5 +1,6 @@
 mod charset;
 mod error;
+mod events;
 mod header;
 mod method;
 mod parse;
@@ -10,6 +11,7 @@ mod version;
 
 pub use charset::{Charset, Error as CharsetError};
 pub use error::{ShioriError, ShioriErrorContext};
+pub use events::{Event, OnAnchorSelect};
 pub use header::{HeaderMap, HeaderName, HeaderNameError, HeaderValue, HeaderValueError};
 pub use method::Method;
 pub use parse::Error as ParseError;

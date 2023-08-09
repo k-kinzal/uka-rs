@@ -119,6 +119,18 @@ impl<K: Eq + Hash, V> OrderedBag<K, V> {
         self.map.entry(k).or_default().push(pos);
     }
 
+    pub fn remove<Q: ?Sized>(&mut self, k: &Q) -> Option<V>
+    where
+        K: Borrow<Q>,
+        Q: Eq + Hash,
+    {
+        // TODO: fix
+        self.map
+            .remove(k)
+            .and_then(|pos| pos.first())
+            .map(|pos| self.entries.remove(*pos).1)
+    }
+
     /// Returns the number of elements in the bag.
     pub fn len(&self) -> usize {
         self.entries.len()

@@ -1,39 +1,18 @@
+mod context;
+mod handler;
+
+use crate::context::ShioriContext;
+use crate::handler::Handler;
 use once_cell::sync::OnceCell;
-use std::path::PathBuf;
 use uka_shiori::dll::Adapter;
-use uka_shiori::runtime::{box_handler, BoxHandlerV3, Context, ContextData};
-use uka_shiori::types::v3;
+use uka_shiori::runtime::ContextData;
 
-struct ShioriContext {
-    #[allow(dead_code)]
-    path: PathBuf,
-}
-impl ContextData for ShioriContext {
-    type Error = v3::ShioriError;
-
-    fn new(path: PathBuf) -> Result<Self, Self::Error> {
-        Ok(Self { path })
-    }
-}
-
-static SHIORI: OnceCell<Adapter<ShioriContext, BoxHandlerV3<ShioriContext>>> = OnceCell::new();
+static SHIORI: OnceCell<Adapter<ShioriContext, Handler>> = OnceCell::new();
 
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn load(h: isize, len: usize) -> bool {
-    let shiori = SHIORI.get_or_init(|| {
-        box_handler(|_ctx: Context<ShioriContext>, _req: v3::Request| async {
-            Ok(v3::Response::builder()
-                .version(v3::Version::SHIORI_30)
-                .status_code(v3::StatusCode::OK)
-                .header(v3::HeaderName::SENDER, "Sakura")
-                .header(v3::HeaderName::VALUE, "value")
-                .charset(v3::Charset::UTF8)
-                .build()
-                .expect("unreachable"))
-        })
-        .into()
-    });
+    let shiori = SHIORI.get_or_init(|| Handler::default().into());
     unsafe { shiori.load(h, len) }
 }
 
