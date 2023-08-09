@@ -296,7 +296,7 @@ mod tests {
     impl ContextData for Data {
         type Error = v3::ShioriError;
         fn new(path: PathBuf) -> Result<Self, Self::Error> {
-            let result = fs::read_dir(&path);
+            let result = fs::read_dir(path);
             assert!(result.is_ok(), "{}", result.unwrap_err());
 
             Ok(Self)
@@ -311,7 +311,7 @@ mod tests {
 
         let path = std::env::temp_dir();
         let path = path.join("マルチバイトディレクトリ");
-        let _ = fs::create_dir(&path);
+        let _ = fs::create_dir(path.clone());
 
         let bytes = ManuallyDrop::new(path.into_os_string().to_vec());
         let res = unsafe { adapter.load(bytes.as_ptr() as isize, bytes.len()) };
@@ -326,7 +326,7 @@ mod tests {
 
         let path = std::env::temp_dir();
         let path = path.join("マルチバイトディレクトリ");
-        let _ = fs::create_dir(&path);
+        let _ = fs::create_dir(path);
 
         let res = unsafe { adapter.load(null::<c_void>() as isize, 0) };
         assert!(!res);
@@ -340,7 +340,7 @@ mod tests {
 
         let path = std::env::temp_dir();
         let path = path.join("マルチバイトディレクトリ");
-        let _ = fs::create_dir(&path);
+        let _ = fs::create_dir(path.clone());
 
         let bytes = ManuallyDrop::new(path.into_os_string().to_vec());
         let res = unsafe { adapter.load(bytes.as_ptr() as isize, bytes.len()) };
@@ -367,7 +367,7 @@ mod tests {
 
         let path = std::env::temp_dir();
         let path = path.join("マルチバイトディレクトリ");
-        let _ = fs::create_dir(&path);
+        let _ = fs::create_dir(path.clone());
 
         let bytes = ManuallyDrop::new(path.into_os_string().to_vec());
         let res = unsafe { adapter.load(bytes.as_ptr() as isize, bytes.len()) };
@@ -398,7 +398,7 @@ mod tests {
 
         let path = std::env::temp_dir();
         let path = path.join("マルチバイトディレクトリ");
-        let _ = fs::create_dir(&path);
+        let _ = fs::create_dir(path.clone());
 
         let bytes = ManuallyDrop::new(path.into_os_string().to_vec());
         let res = unsafe { adapter.load(bytes.as_ptr() as isize, bytes.len()) };
@@ -417,7 +417,7 @@ mod tests {
 
         let path = std::env::temp_dir();
         let path = path.join("マルチバイトディレクトリ");
-        let _ = fs::create_dir(&path);
+        let _ = fs::create_dir(path.clone());
 
         let bytes = ManuallyDrop::new(path.into_os_string().to_vec());
         let res = unsafe { adapter.load(bytes.as_ptr() as isize, bytes.len()) };

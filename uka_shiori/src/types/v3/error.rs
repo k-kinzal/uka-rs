@@ -180,7 +180,6 @@ impl IntoResponse for ShioriError {
             .status_code(status_code)
             .build()
             .expect("failed to build error response")
-            .into()
     }
 }
 

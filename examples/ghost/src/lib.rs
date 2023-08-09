@@ -18,6 +18,7 @@ impl ContextData for ShioriContext {
 
 static SHIORI: OnceCell<Adapter<ShioriContext, BoxHandlerV3<ShioriContext>>> = OnceCell::new();
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn load(h: isize, len: usize) -> bool {
     let shiori = SHIORI.get_or_init(|| {
@@ -44,6 +45,7 @@ pub extern "C" fn unload() -> bool {
     }
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn request(h: isize, len: *mut usize) -> isize {
     let shiori = SHIORI.get().expect("unreachable");
