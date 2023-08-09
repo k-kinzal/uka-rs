@@ -283,6 +283,10 @@ impl Builder {
     }
 }
 
+pub trait IntoResponse {
+    fn into_response(self) -> Response;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,6 +1,5 @@
 use crate::runtime::context::{Context, ContextData};
-use crate::runtime::error::ShioriError;
-use crate::types::{Request, Response};
+use crate::types::v3;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -40,17 +39,17 @@ pub struct ShioriHandler<F> {
     handle: F,
 }
 
-impl<C, F, Fut> Service<C, Request> for ShioriHandler<F>
+impl<Ctx, Req, Res, Err, F, Fut> Service<Ctx, Req> for ShioriHandler<F>
 where
-    C: ContextData,
-    F: Fn(Context<C>, Request) -> Fut,
-    Fut: Future<Output = Result<Response, ShioriError>>,
+    Ctx: ContextData,
+    F: Fn(Context<Ctx>, Req) -> Fut,
+    Fut: Future<Output = Result<Res, Err>>,
 {
-    type Response = Response;
-    type Error = ShioriError;
+    type Response = Res;
+    type Error = Err;
     type Future = Fut;
 
-    fn call(&self, context: Context<C>, request: Request) -> Self::Future {
+    fn call(&self, context: Context<Ctx>, request: Req) -> Self::Future {
         (self.handle)(context, request)
     }
 }
@@ -62,27 +61,32 @@ where
 ///
 /// The created handler can be used by a server or other components to handle incoming
 /// SHIORI protocol requests.
-pub fn handler<C, F, Fut>(f: F) -> ShioriHandler<F>
+pub fn handler<Ctx, Req, Res, Err, F, Fut>(f: F) -> ShioriHandler<F>
 where
-    C: ContextData,
-    F: Fn(Context<C>, Request) -> Fut,
-    Fut: Future<Output = Result<Response, ShioriError>>,
+    Ctx: ContextData,
+    F: Fn(Context<Ctx>, Req) -> Fut,
+    Fut: Future<Output = Result<Res, Err>>,
 {
     ShioriHandler { handle: f }
 }
 
-pub type BoxAsyncFn<C> = Box<
-    dyn Fn(Context<C>, Request) -> Pin<Box<dyn Future<Output = Result<Response, ShioriError>>>>,
->;
+pub type BoxAsyncFn<Ctx, Req, Res, Err> =
+    Box<dyn Fn(Context<Ctx>, Req) -> Pin<Box<dyn Future<Output = Result<Res, Err>>>> + Send + Sync>;
+
+pub type BoxHandler<Ctx, Req, Res, Err> = ShioriHandler<BoxAsyncFn<Ctx, Req, Res, Err>>;
+
+pub type BoxHandlerV3<Ctx> = BoxHandler<Ctx, v3::Request, v3::Response, v3::ShioriError>;
 
 /// Provides a convenient way to construct a `ShioriHandler` from a function, and wraps the function in a `Box`.
 ///
 /// This is used over `handler` when you need to store the handler in a `OnceCell` or similar structures
-pub fn box_handler<C, F, Fut>(f: F) -> ShioriHandler<BoxAsyncFn<C>>
+pub fn box_handler<Ctx, Req, Res, Err, F, Fut>(
+    f: F,
+) -> ShioriHandler<BoxAsyncFn<Ctx, Req, Res, Err>>
 where
-    C: ContextData,
-    F: Fn(Context<C>, Request) -> Fut + 'static,
-    Fut: Future<Output = Result<Response, ShioriError>> + 'static,
+    Ctx: ContextData,
+    F: Fn(Context<Ctx>, Req) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = Result<Res, Err>> + 'static,
 {
     ShioriHandler {
         handle: Box::new(move |ctx, req| Box::pin(f(ctx, req))),
@@ -92,7 +96,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{v3, RequestExt, ResponseExt};
+    use crate::types::v3;
     use std::path::PathBuf;
 
     struct Data;
@@ -105,171 +109,165 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_handler_with_closure() -> Result<(), ShioriError> {
-        let handler = handler(|_ctx: Context<Data>, _req: Request| async {
-            let resp = Response::builder(v3::Version::SHIORI_30)
+    async fn test_handler_with_closure() -> Result<(), v3::ShioriError> {
+        let handler = handler(|_ctx: Context<Data>, _req: v3::Request| async {
+            v3::Response::builder()
+                .version(v3::Version::SHIORI_30)
                 .status_code(v3::StatusCode::OK)
-                .build()?;
-            Ok(resp.into())
+                .build()
+                .map_err(v3::ShioriError::from)
         });
 
         let ctx = Context::from(Data);
-        let req = Request::builder(v3::Version::SHIORI_30)
+        let req = v3::Request::builder()
+            .version(v3::Version::SHIORI_30)
             .method(v3::Method::GET)
             .header(v3::HeaderName::CHARSET, v3::Charset::UTF8.to_string())
             .build()?;
-        let resp = handler.call(ctx, req.into()).await?;
-        match resp {
-            Response::V3(r) => {
-                assert_eq!(r.version(), v3::Version::SHIORI_30);
-                assert_eq!(r.status_code(), v3::StatusCode::OK);
-            }
-        }
+        let resp = handler.call(ctx, req).await?;
+        assert_eq!(resp.version(), v3::Version::SHIORI_30);
+        assert_eq!(resp.status_code(), v3::StatusCode::OK);
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_handler_with_fn() -> Result<(), ShioriError> {
+    async fn test_handler_with_fn() -> Result<(), v3::ShioriError> {
         #[allow(clippy::manual_async_fn)]
         fn handle(
             _ctx: Context<Data>,
-            _req: Request,
-        ) -> impl Future<Output = Result<Response, ShioriError>> {
+            _req: v3::Request,
+        ) -> impl Future<Output = Result<v3::Response, v3::ShioriError>> {
             async {
-                let resp = Response::builder(v3::Version::SHIORI_30)
+                v3::Response::builder()
+                    .version(v3::Version::SHIORI_30)
                     .status_code(v3::StatusCode::OK)
-                    .build()?;
-                Ok(resp.into())
+                    .build()
+                    .map_err(v3::ShioriError::from)
             }
         }
 
         let handler = handler(handle);
 
         let ctx = Context::from(Data);
-        let req = Request::builder(v3::Version::SHIORI_30)
+        let req = v3::Request::builder()
+            .version(v3::Version::SHIORI_30)
             .method(v3::Method::GET)
             .header(v3::HeaderName::CHARSET, v3::Charset::UTF8.to_string())
             .build()?;
-        let resp = handler.call(ctx, req.into()).await?;
-        match resp {
-            Response::V3(r) => {
-                assert_eq!(r.version(), v3::Version::SHIORI_30);
-                assert_eq!(r.status_code(), v3::StatusCode::OK);
-            }
-        }
+        let resp = handler.call(ctx, req).await?;
+        assert_eq!(resp.version(), v3::Version::SHIORI_30);
+        assert_eq!(resp.status_code(), v3::StatusCode::OK);
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_handler_with_async_fn() -> Result<(), ShioriError> {
-        async fn handle(_ctx: Context<Data>, _req: Request) -> Result<Response, ShioriError> {
-            let resp = Response::builder(v3::Version::SHIORI_30)
+    async fn test_handler_with_async_fn() -> Result<(), v3::ShioriError> {
+        async fn handle(
+            _ctx: Context<Data>,
+            _req: v3::Request,
+        ) -> Result<v3::Response, v3::ShioriError> {
+            v3::Response::builder()
+                .version(v3::Version::SHIORI_30)
                 .status_code(v3::StatusCode::OK)
-                .build()?;
-            Ok(resp.into())
+                .build()
+                .map_err(v3::ShioriError::from)
         }
 
         let handler = handler(handle);
 
         let ctx = Context::from(Data);
-        let req = Request::builder(v3::Version::SHIORI_30)
+        let req = v3::Request::builder()
+            .version(v3::Version::SHIORI_30)
             .method(v3::Method::GET)
             .header(v3::HeaderName::CHARSET, v3::Charset::UTF8.to_string())
             .build()?;
-        let resp = handler.call(ctx, req.into()).await?;
-        match resp {
-            Response::V3(r) => {
-                assert_eq!(r.version(), v3::Version::SHIORI_30);
-                assert_eq!(r.status_code(), v3::StatusCode::OK);
-            }
-        }
+        let resp = handler.call(ctx, req).await?;
+        assert_eq!(resp.version(), v3::Version::SHIORI_30);
+        assert_eq!(resp.status_code(), v3::StatusCode::OK);
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_box_handler_with_closure() -> Result<(), ShioriError> {
-        let handler = box_handler(|_ctx: Context<Data>, _req: Request| async {
-            let resp = Response::builder(v3::Version::SHIORI_30)
+    async fn test_box_handler_with_closure() -> Result<(), v3::ShioriError> {
+        let handler = box_handler(|_ctx: Context<Data>, _req: v3::Request| async {
+            v3::Response::builder()
+                .version(v3::Version::SHIORI_30)
                 .status_code(v3::StatusCode::OK)
-                .build()?;
-            Ok(resp.into())
+                .build()
+                .map_err(v3::ShioriError::from)
         });
 
         let ctx = Context::from(Data);
-        let req = Request::builder(v3::Version::SHIORI_30)
+        let req = v3::Request::builder()
+            .version(v3::Version::SHIORI_30)
             .method(v3::Method::GET)
             .header(v3::HeaderName::CHARSET, v3::Charset::UTF8.to_string())
             .build()?;
-        let resp = handler.call(ctx, req.into()).await?;
-        match resp {
-            Response::V3(r) => {
-                assert_eq!(r.version(), v3::Version::SHIORI_30);
-                assert_eq!(r.status_code(), v3::StatusCode::OK);
-            }
-        }
+        let resp = handler.call(ctx, req).await?;
+        assert_eq!(resp.version(), v3::Version::SHIORI_30);
+        assert_eq!(resp.status_code(), v3::StatusCode::OK);
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_box_handler_with_fn() -> Result<(), ShioriError> {
+    async fn test_box_handler_with_fn() -> Result<(), v3::ShioriError> {
         #[allow(clippy::manual_async_fn)]
         fn handle(
             _ctx: Context<Data>,
-            _req: Request,
-        ) -> impl Future<Output = Result<Response, ShioriError>> {
+            _req: v3::Request,
+        ) -> impl Future<Output = Result<v3::Response, v3::ShioriError>> {
             async {
-                let resp = Response::builder(v3::Version::SHIORI_30)
+                v3::Response::builder()
+                    .version(v3::Version::SHIORI_30)
                     .status_code(v3::StatusCode::OK)
-                    .build()?;
-                Ok(resp.into())
+                    .build()
+                    .map_err(v3::ShioriError::from)
             }
         }
 
         let handler = box_handler(handle);
 
         let ctx = Context::from(Data);
-        let req = Request::builder(v3::Version::SHIORI_30)
+        let req = v3::Request::builder()
+            .version(v3::Version::SHIORI_30)
             .method(v3::Method::GET)
             .header(v3::HeaderName::CHARSET, v3::Charset::UTF8.to_string())
             .build()?;
-        let resp = handler.call(ctx, req.into()).await?;
-        match resp {
-            Response::V3(r) => {
-                assert_eq!(r.version(), v3::Version::SHIORI_30);
-                assert_eq!(r.status_code(), v3::StatusCode::OK);
-            }
-        }
+        let resp = handler.call(ctx, req).await?;
+        assert_eq!(resp.version(), v3::Version::SHIORI_30);
+        assert_eq!(resp.status_code(), v3::StatusCode::OK);
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_box_handler_with_async_fn() -> Result<(), ShioriError> {
-        async fn handle(_ctx: Context<Data>, _req: Request) -> Result<Response, ShioriError> {
-            let resp = Response::builder(v3::Version::SHIORI_30)
+    async fn test_box_handler_with_async_fn() -> Result<(), v3::ShioriError> {
+        async fn handle(
+            _ctx: Context<Data>,
+            _req: v3::Request,
+        ) -> Result<v3::Response, v3::ShioriError> {
+            v3::Response::builder()
+                .version(v3::Version::SHIORI_30)
                 .status_code(v3::StatusCode::OK)
-                .build()?;
-            Ok(resp.into())
+                .build()
+                .map_err(v3::ShioriError::from)
         }
 
         let handler = box_handler(handle);
 
         let ctx = Context::from(Data);
-        let req = Request::builder(v3::Version::SHIORI_30)
+        let req = v3::Request::builder()
+            .version(v3::Version::SHIORI_30)
             .method(v3::Method::GET)
             .header(v3::HeaderName::CHARSET, v3::Charset::UTF8.to_string())
             .build()?;
-        let resp = handler.call(ctx, req.into()).await?;
-        match resp {
-            Response::V3(r) => {
-                assert_eq!(r.version(), v3::Version::SHIORI_30);
-                assert_eq!(r.status_code(), v3::StatusCode::OK);
-            }
-        }
+        let resp = handler.call(ctx, req).await?;
+        assert_eq!(resp.version(), v3::Version::SHIORI_30);
+        assert_eq!(resp.status_code(), v3::StatusCode::OK);
 
         Ok(())
     }

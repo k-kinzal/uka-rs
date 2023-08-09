@@ -1,5 +1,5 @@
+use uka_shiori::types::v3;
 use uka_shiori::types::v3::HeaderValue;
-use uka_shiori::types::{v3, Request, Response};
 
 /// http://usada.sakura.vg/contents/specification2.html#shioriprotocol
 /// > リクエスト文字列は以下の形式で構成される。
@@ -27,29 +27,26 @@ fn spec_shiori_request() -> anyhow::Result<()> {
         b"\r\n".to_vec(),
     ]
     .concat();
-    match Request::parse(&input)? {
-        Request::V3(request) => {
-            assert_eq!(request.method(), v3::Method::GET);
-            assert_eq!(request.version(), v3::Version::SHIORI_30);
-            assert_eq!(
-                request.sender(),
-                Some(&HeaderValue::from(b"Materia".as_slice()))
-            );
-            assert_eq!(request.id(), Some(&HeaderValue::from(b"hoge".as_slice())));
-            assert_eq!(
-                request.reference0(),
-                Some(&HeaderValue::from(b"uge".as_slice()))
-            );
+    let request = v3::Request::parse(&input)?;
+    assert_eq!(request.method(), v3::Method::GET);
+    assert_eq!(request.version(), v3::Version::SHIORI_30);
+    assert_eq!(
+        request.sender(),
+        Some(&HeaderValue::from(b"Materia".as_slice()))
+    );
+    assert_eq!(request.id(), Some(&HeaderValue::from(b"hoge".as_slice())));
+    assert_eq!(
+        request.reference0(),
+        Some(&HeaderValue::from(b"uge".as_slice()))
+    );
 
-            assert_eq!(
-                request.as_bytes(),
-                input,
-                "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-                String::from_utf8_lossy(&request.as_bytes()),
-                String::from_utf8_lossy(&input)
-            );
-        }
-    };
+    assert_eq!(
+        request.as_bytes(),
+        input,
+        "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
+        String::from_utf8_lossy(&request.as_bytes()),
+        String::from_utf8_lossy(&input)
+    );
 
     Ok(())
 }
@@ -75,28 +72,25 @@ fn spec_shiori_response() -> anyhow::Result<()> {
     ]
     .concat();
 
-    match Response::parse(&input)? {
-        Response::V3(response) => {
-            assert_eq!(response.version(), v3::Version::SHIORI_30);
-            assert_eq!(response.status_code(), v3::StatusCode::OK);
-            assert_eq!(
-                response.sender(),
-                Some(&HeaderValue::from(b"F.I.R.S.T".as_slice()))
-            );
-            assert_eq!(
-                response.value(),
-                Some(&HeaderValue::from(b"hoge".as_slice()))
-            );
+    let response = v3::Response::parse(&input)?;
+    assert_eq!(response.version(), v3::Version::SHIORI_30);
+    assert_eq!(response.status_code(), v3::StatusCode::OK);
+    assert_eq!(
+        response.sender(),
+        Some(&HeaderValue::from(b"F.I.R.S.T".as_slice()))
+    );
+    assert_eq!(
+        response.value(),
+        Some(&HeaderValue::from(b"hoge".as_slice()))
+    );
 
-            assert_eq!(
-                response.as_bytes(),
-                input,
-                "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-                String::from_utf8_lossy(&response.as_bytes()),
-                String::from_utf8_lossy(&input)
-            );
-        }
-    };
+    assert_eq!(
+        response.as_bytes(),
+        input,
+        "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
+        String::from_utf8_lossy(&response.as_bytes()),
+        String::from_utf8_lossy(&input)
+    );
 
     Ok(())
 }
@@ -116,32 +110,29 @@ fn spec_shiori_response_with_name_of_person_to_talk_to() -> anyhow::Result<()> {
     ]
     .concat();
 
-    match Response::parse(&input)? {
-        Response::V3(response) => {
-            assert_eq!(response.version(), v3::Version::SHIORI_30);
-            assert_eq!(response.status_code(), v3::StatusCode::OK);
-            assert_eq!(
-                response.sender(),
-                Some(&HeaderValue::from(b"F.I.R.S.T".as_slice()))
-            );
-            assert_eq!(
-                response.value(),
-                Some(&HeaderValue::from(b"hoge".as_slice()))
-            );
-            assert_eq!(
-                response.reference0(),
-                Some(&HeaderValue::from(b"Sakura".as_slice()))
-            );
+    let response = v3::Response::parse(&input)?;
+    assert_eq!(response.version(), v3::Version::SHIORI_30);
+    assert_eq!(response.status_code(), v3::StatusCode::OK);
+    assert_eq!(
+        response.sender(),
+        Some(&HeaderValue::from(b"F.I.R.S.T".as_slice()))
+    );
+    assert_eq!(
+        response.value(),
+        Some(&HeaderValue::from(b"hoge".as_slice()))
+    );
+    assert_eq!(
+        response.reference0(),
+        Some(&HeaderValue::from(b"Sakura".as_slice()))
+    );
 
-            assert_eq!(
-                response.as_bytes(),
-                input,
-                "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-                String::from_utf8_lossy(&response.as_bytes()),
-                String::from_utf8_lossy(&input)
-            );
-        }
-    };
+    assert_eq!(
+        response.as_bytes(),
+        input,
+        "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
+        String::from_utf8_lossy(&response.as_bytes()),
+        String::from_utf8_lossy(&input)
+    );
 
     Ok(())
 }

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "examples/ghost",
     "uka_macro",
     "uka_shiori",
     "uka_sstp",

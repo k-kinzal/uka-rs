@@ -172,6 +172,22 @@ impl Request {
     }
 }
 
+impl TryFrom<&[u8]> for Request {
+    type Error = ParseError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Request::parse(value)
+    }
+}
+
+impl TryFrom<Vec<u8>> for Request {
+    type Error = ParseError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Request::parse(&value)
+    }
+}
+
 /// Error that can occur when build SHIORI request.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
