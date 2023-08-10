@@ -195,10 +195,7 @@ where
     }
 
     /// `OwnedPtr<T, System>` from `Vec<T>`.
-    pub fn from_vec(mut x: Vec<T>) -> Self
-    where
-        T: Clone,
-    {
+    pub fn from_vec(mut x: Vec<T>) -> Self {
         let ptr = x.as_mut_ptr();
         let size = x.len() * std::mem::size_of::<T>();
         std::mem::forget(x);
