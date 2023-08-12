@@ -95,7 +95,10 @@ pub enum Error {
     FailedOpenLibrary(#[from] libloading::Error),
 
     #[error("failed to canonicalize path: {0}")]
-    FailedCanonicalize(#[from] std::io::Error),
+    FailedCanonicalizePath(#[from] std::io::Error),
+
+    #[error("failed to get parent dir")]
+    FailedGetParentDir,
 
     #[error("failed to SHIORI::load")]
     FailedLoad,
@@ -119,9 +122,13 @@ impl ShioriCaller {
     /// This function inherits the behavior of libloading::Library::new.
     ///
     /// See: https://docs.rs/libloading/latest/libloading/struct.Library.html#method.new
-    pub unsafe fn open<P: AsRef<OsStr> + Sized>(path: P) -> Result<Self, Error> {
-        let dir = fs::canonicalize(Path::new(&path).join(".."))?;
-        let lib = Library::new(path)?;
+    pub unsafe fn open<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
+        let path = fs::canonicalize(&path)?;
+        let dir = path
+            .parent()
+            .ok_or(Error::FailedGetParentDir)?
+            .to_path_buf();
+        let lib = Library::new(&path)?;
         let len = dir.as_os_str().len();
         let ptr = Box::into_raw(Box::new(dir));
 
@@ -191,21 +198,6 @@ mod tests {
 
     #[test]
     fn test_caller_request() -> anyhow::Result<()> {
-        let path = PATH.lock().expect("lock failed");
-        let caller = unsafe { ShioriCaller::open(path.as_path())? };
-
-        let req = v3::Request::builder()
-            .method(v3::Method::GET)
-            .version(v3::Version::SHIORI_30)
-            .build()?;
-        let res = caller.call(req);
-        assert_eq!(res.status_code(), v3::StatusCode::OK);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_caller_request2() -> anyhow::Result<()> {
         let path = PATH.lock().expect("lock failed");
         let caller = unsafe { ShioriCaller::open(path.as_path())? };
 
