@@ -3,7 +3,7 @@ use libloading::{Library as Lib, Symbol};
 use std::alloc::System;
 use std::ffi::OsStr;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use uka_util::ptr::{OwnedPtr, RawPtr};
 
 /// LoadFunc is the load interface of the SHIORI DLL.
@@ -166,23 +166,23 @@ impl Drop for ShioriCaller {
 mod tests {
     use super::*;
     use once_cell::sync::Lazy;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use std::process::Command;
     use std::sync::Mutex;
 
     // generate library
     static PATH: Lazy<Mutex<PathBuf>> = Lazy::new(|| {
         Command::new("cargo")
-            .args(&["build", "-p", "ghost"])
+            .args(["build", "-p", "ghost"])
             .status()
             .expect("failed to execute cargo build -p ghost");
         let s = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not found");
         let p = Path::new(&s).join("..").join("target").join("debug");
-        if std::fs::metadata(&p.join("libghost.dylib")).is_ok() {
+        if fs::metadata(p.join("libghost.dylib")).is_ok() {
             Mutex::new(p.join("libghost.dylib"))
-        } else if std::fs::metadata(&p.join("ghost.dll")).is_ok() {
+        } else if fs::metadata(p.join("ghost.dll")).is_ok() {
             Mutex::new(p.join("ghost.dll"))
-        } else if std::fs::metadata(&p.join("ghost.so")).is_ok() {
+        } else if fs::metadata(p.join("ghost.so")).is_ok() {
             Mutex::new(p.join("ghost.so"))
         } else {
             panic!("ghost not found");
