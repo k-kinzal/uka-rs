@@ -106,6 +106,7 @@ pub enum Error {
 
 /// Caller is the interface for calling the SHIORI DLL.
 trait Caller<R> {
+    /// Response that is a pair of `R` of Request
     type Response;
 
     /// Call the SHIORI DLL.
