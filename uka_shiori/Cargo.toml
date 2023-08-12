@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4.20"
+libloading = "0.8.0"
 thiserror = "1.0.40"
 tokio = { version = "1.31.0", features = ["full"] }
 uka_util = { path = "../uka_util" }
