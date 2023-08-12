@@ -182,8 +182,8 @@ mod tests {
             Mutex::new(p.join("libghost.dylib"))
         } else if fs::metadata(p.join("ghost.dll")).is_ok() {
             Mutex::new(p.join("ghost.dll"))
-        } else if fs::metadata(p.join("ghost.so")).is_ok() {
-            Mutex::new(p.join("ghost.so"))
+        } else if fs::metadata(p.join("libghost.so")).is_ok() {
+            Mutex::new(p.join("libghost.so"))
         } else {
             panic!("ghost not found");
         }
