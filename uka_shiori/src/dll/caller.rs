@@ -124,11 +124,11 @@ impl ShioriCaller {
     /// See: https://docs.rs/libloading/latest/libloading/struct.Library.html#method.new
     pub unsafe fn open<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         let path = fs::canonicalize(&path)?;
+        let lib = Library::new(&path)?;
         let dir = path
             .parent()
             .ok_or(Error::FailedGetParentDir)?
             .to_path_buf();
-        let lib = Library::new(&path)?;
         let len = dir.as_os_str().len();
         let ptr = Box::into_raw(Box::new(dir));
 
