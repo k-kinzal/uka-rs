@@ -208,6 +208,35 @@ mod tests {
     });
 
     #[test]
+    fn test_caller_open_library() {
+        let path = PATH.lock().expect("lock failed");
+        let result = unsafe { ShioriCaller::open(path.as_path()) };
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_caller_failed_open_library_with_not_found_path() {
+        let path = Path::new("not_found");
+        let result = unsafe { ShioriCaller::open(path) };
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.err(),
+            Some(Error::FailedCanonicalizePath(_))
+        ));
+    }
+
+    #[test]
+    fn test_caller_failed_open_library_with_not_dll_path() {
+        let path = Path::new("Cargo.toml");
+        let result = unsafe { ShioriCaller::open(path) };
+
+        assert!(result.is_err());
+        assert!(matches!(result.err(), Some(Error::FailedOpenLibrary(_))));
+    }
+
+    #[test]
     fn test_caller_request() -> anyhow::Result<()> {
         let path = PATH.lock().expect("lock failed");
         let caller = unsafe { ShioriCaller::open(path.as_path())? };
