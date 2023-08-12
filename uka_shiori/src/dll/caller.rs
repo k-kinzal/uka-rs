@@ -104,10 +104,21 @@ pub enum Error {
     FailedLoad,
 }
 
+/// Caller is the interface for calling the SHIORI DLL.
 trait Caller<R> {
     type Response;
 
-    fn call(&self, request: R) -> Self::Response;
+    /// Call the SHIORI DLL.
+    ///
+    /// # Safety
+    ///
+    /// The safe use of this function requires that:
+    ///
+    /// 1. Returns the address of the byte string of the response for which the SHIORI DLL's request function has relinquished ownership
+    /// 2. The length pointer passed as the second argument of the SHIORI DLL request function is rewritten with the length of the response byte string.
+    ///
+    /// When these conditions are upheld, using `Caller::call` will not cause undefined behavior.
+    unsafe fn call(&self, request: R) -> Self::Response;
 }
 
 /// ShioriCaller calls the SHIORI DLL.
@@ -143,7 +154,7 @@ impl ShioriCaller {
 impl Caller<v3::Request> for ShioriCaller {
     type Response = v3::Response;
 
-    fn call(&self, request: v3::Request) -> v3::Response {
+    unsafe fn call(&self, request: v3::Request) -> v3::Response {
         use v3::IntoResponse;
 
         let bytes = request.as_bytes();
@@ -152,9 +163,8 @@ impl Caller<v3::Request> for ShioriCaller {
 
         let hglobal = self.0.request(h, &len as *const usize as *mut usize);
 
-        let ptr =
-            unsafe { RawPtr::<[u8]>::from_raw_address_parts(hglobal, len).to_owned::<System>() };
-        match v3::Response::parse(unsafe { ptr.as_slice() }) {
+        let ptr = RawPtr::<[u8]>::from_raw_address_parts(hglobal, len).to_owned::<System>();
+        match v3::Response::parse(ptr.as_slice()) {
             Ok(response) => response,
             Err(e) => v3::ShioriError::from(e)
                 .with_status_code(v3::StatusCode::INTERNAL_SERVER_ERROR)
@@ -205,7 +215,7 @@ mod tests {
             .method(v3::Method::GET)
             .version(v3::Version::SHIORI_30)
             .build()?;
-        let res = caller.call(req);
+        let res = unsafe { caller.call(req) };
         assert_eq!(res.status_code(), v3::StatusCode::OK);
 
         Ok(())
