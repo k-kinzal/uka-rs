@@ -23,7 +23,7 @@ jobs:
           override: true
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: stable20230226
+          shared-key: ${{ matrix.os }}-stable20230820
       - name: Cargo build
         run: cargo test --no-run
       - name: Clear the cargo caches
@@ -51,7 +51,7 @@ jobs:
           override: true
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: stable20230226
+          shared-key: ${{ matrix.os }}-stable20230820
       - name: Cargo test
         run: cargo test
 
@@ -71,7 +71,7 @@ jobs:
           override: true
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: stable20230226
+          shared-key: ubuntu-latest-stable20230820
       - run: |
           for example in */examples/*.rs
           do
@@ -80,7 +80,10 @@ jobs:
 
   lint:
     needs: build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     env:
       RUSTFLAGS: "-D warnings"
     steps:
@@ -92,7 +95,7 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: stable20230226
+          shared-key: ${{ matrix.os }}-stable20230820
       - name: Cargo fmt
         uses: actions-rs/cargo@v1
         with:
