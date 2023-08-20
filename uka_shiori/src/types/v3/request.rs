@@ -162,7 +162,7 @@ impl Request {
         buf.extend_from_slice(self.version.to_string().as_bytes());
         buf.extend_from_slice(b"\r\n");
         for (name, value) in self.headers.iter() {
-            buf.extend_from_slice(&name.as_bytes());
+            buf.extend_from_slice(&name.to_vec());
             buf.extend_from_slice(b": ");
             buf.extend_from_slice(&value.as_bytes());
             buf.extend_from_slice(b"\r\n");

@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use uka_util::string::{Error as Rfc7230StringConvertError, Rfc7230String};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Inner {
@@ -15,14 +16,14 @@ enum Inner {
     Reference7,
     SecurityLevel,
     Value,
-    Other(String),
+    Other(Rfc7230String),
 }
 
 /// Error that can occur when convert from string.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("invalid header name: {0}")]
-    InvalidHeaderName(String),
+    InvalidHeaderName(#[from] Rfc7230StringConvertError),
 }
 
 /// HeaderName is the name of the SHIORI header field.
@@ -105,14 +106,9 @@ impl HeaderName {
             "Reference7" => Ok(HeaderName(Inner::Reference7)),
             "SecurityLevel" => Ok(HeaderName(Inner::SecurityLevel)),
             "Value" => Ok(HeaderName(Inner::Value)),
-            _ => {
-                let valid = s.as_bytes().iter().all(|byte| matches!(*byte, b'0'..=b'9' | b'!' | b'#'..=b'\'' | b'*'..=b'+' | b'-'..=b'.' | b'^'..=b'`' | b'A'..=b'Z' | b'a'..=b'z' | b'|' | b'~'));
-                if valid {
-                    Ok(HeaderName(Inner::Other(s.to_string())))
-                } else {
-                    Err(Error::InvalidHeaderName(s.to_string()))
-                }
-            }
+            _ => Ok(HeaderName(Inner::Other(Rfc7230String::from_string(
+                s.to_string(),
+            )?))),
         }
     }
 
@@ -143,22 +139,22 @@ impl HeaderName {
     ///
     /// ```rust
     /// # use uka_shiori::types::v3::HeaderName;
-    /// assert_eq!(HeaderName::CHARSET.as_bytes(), b"Charset");
-    /// assert_eq!(HeaderName::SENDER.as_bytes(), b"Sender");
-    /// assert_eq!(HeaderName::ID.as_bytes(), b"ID");
-    /// assert_eq!(HeaderName::REFERENCE0.as_bytes(), b"Reference0");
-    /// assert_eq!(HeaderName::REFERENCE1.as_bytes(), b"Reference1");
-    /// assert_eq!(HeaderName::REFERENCE2.as_bytes(), b"Reference2");
-    /// assert_eq!(HeaderName::REFERENCE3.as_bytes(), b"Reference3");
-    /// assert_eq!(HeaderName::REFERENCE4.as_bytes(), b"Reference4");
-    /// assert_eq!(HeaderName::REFERENCE5.as_bytes(), b"Reference5");
-    /// assert_eq!(HeaderName::REFERENCE6.as_bytes(), b"Reference6");
-    /// assert_eq!(HeaderName::REFERENCE7.as_bytes(), b"Reference7");
-    /// assert_eq!(HeaderName::SECURITY_LEVEL.as_bytes(), b"SecurityLevel");
-    /// assert_eq!(HeaderName::VALUE.as_bytes(), b"Value");
-    /// assert_eq!(HeaderName::from_static("X-Extend-Header").unwrap().as_bytes(), b"X-Extend-Header");
+    /// assert_eq!(HeaderName::CHARSET.to_vec(), b"Charset");
+    /// assert_eq!(HeaderName::SENDER.to_vec(), b"Sender");
+    /// assert_eq!(HeaderName::ID.to_vec(), b"ID");
+    /// assert_eq!(HeaderName::REFERENCE0.to_vec(), b"Reference0");
+    /// assert_eq!(HeaderName::REFERENCE1.to_vec(), b"Reference1");
+    /// assert_eq!(HeaderName::REFERENCE2.to_vec(), b"Reference2");
+    /// assert_eq!(HeaderName::REFERENCE3.to_vec(), b"Reference3");
+    /// assert_eq!(HeaderName::REFERENCE4.to_vec(), b"Reference4");
+    /// assert_eq!(HeaderName::REFERENCE5.to_vec(), b"Reference5");
+    /// assert_eq!(HeaderName::REFERENCE6.to_vec(), b"Reference6");
+    /// assert_eq!(HeaderName::REFERENCE7.to_vec(), b"Reference7");
+    /// assert_eq!(HeaderName::SECURITY_LEVEL.to_vec(), b"SecurityLevel");
+    /// assert_eq!(HeaderName::VALUE.to_vec(), b"Value");
+    /// assert_eq!(HeaderName::from_static("X-Extend-Header").unwrap().to_vec(), b"X-Extend-Header");
     /// ```
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         self.to_string().into_bytes()
     }
 }
@@ -187,105 +183,5 @@ impl Display for HeaderName {
 impl From<HeaderName> for String {
     fn from(header_name: HeaderName) -> Self {
         header_name.to_string()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use anyhow::Result;
-    use rstest::rstest;
-
-    #[test]
-    fn test_from_static_pass_alpha() -> Result<()> {
-        let name = HeaderName::from_static("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")?;
-        assert_eq!(
-            name.to_string(),
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_from_static_pass_digit() -> Result<()> {
-        let name = HeaderName::from_static("1234567890")?;
-        assert_eq!(name.to_string(), "1234567890");
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_from_static_pass_acceptable_symbol() -> Result<()> {
-        let name = HeaderName::from_static("!#$%&'*+-.^_`|~")?;
-        assert_eq!(name.to_string(), "!#$%&'*+-.^_`|~");
-
-        Ok(())
-    }
-
-    #[rstest]
-    #[case::nul("\0")]
-    #[case::soh("\x01")]
-    #[case::stx("\x02")]
-    #[case::etx("\x03")]
-    #[case::eot("\x04")]
-    #[case::enq("\x05")]
-    #[case::ack("\x06")]
-    #[case::bel("\x07")]
-    #[case::bs("\x08")]
-    #[case::ht("\x09")]
-    #[case::lf("\n")]
-    #[case::vt("\x0b")]
-    #[case::ff("\x0c")]
-    #[case::cr("\r")]
-    #[case::so("\x0e")]
-    #[case::si("\x0f")]
-    #[case::dle("\x10")]
-    #[case::dc1("\x11")]
-    #[case::dc2("\x12")]
-    #[case::dc3("\x13")]
-    #[case::dc4("\x14")]
-    #[case::nak("\x15")]
-    #[case::syn("\x16")]
-    #[case::etb("\x17")]
-    #[case::can("\x18")]
-    #[case::em("\x19")]
-    #[case::sub("\x1a")]
-    #[case::esc("\x1b")]
-    #[case::fs("\x1c")]
-    #[case::gs("\x1d")]
-    #[case::rs("\x1e")]
-    #[case::us("\x1f")]
-    #[case::delete("\x7f")]
-    fn test_from_static_failed_control_character(#[case] input: String) -> Result<()> {
-        let res = HeaderName::from_static(&input);
-        assert!(res.is_err());
-        matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
-
-        Ok(())
-    }
-
-    #[rstest]
-    #[case::left_parenthesis("(")]
-    #[case::right_parenthesis(")")]
-    #[case::comma(",")]
-    #[case::slash("/")]
-    #[case::semicolon(";")]
-    #[case::less_than_sign("<")]
-    #[case::equals_sign("=")]
-    #[case::greater_than_sign(">")]
-    #[case::question_mark("?")]
-    #[case::at_sign("@")]
-    #[case::left_square_bracket("[")]
-    #[case::backslash("\\")]
-    #[case::right_square_bracket("]")]
-    #[case::left_curly_brace("{")]
-    #[case::right_curly_brace("}")]
-    fn test_from_static_failed_unavailable_symbols(#[case] input: String) -> Result<()> {
-        let res = HeaderName::from_static(&input);
-        assert!(res.is_err());
-        matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
-
-        Ok(())
     }
 }

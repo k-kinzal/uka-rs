@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use uka_util::string::{Error as Rfc7230StringConvertError, Rfc7230String};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Inner {
@@ -24,14 +25,14 @@ enum Inner {
     Sentence,
     Port,
     Surface,
-    Other(String),
+    Other(Rfc7230String),
 }
 
 /// Error that can occur when convert from string.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("invalid header name: {0}")]
-    InvalidHeaderName(String),
+    InvalidHeaderName(#[from] Rfc7230StringConvertError),
 }
 
 /// HeaderName is the name of the SSTP header field.
@@ -160,14 +161,9 @@ impl HeaderName {
             "Sentence" => Ok(HeaderName(Inner::Sentence)),
             "Port" => Ok(HeaderName(Inner::Port)),
             "Surface" => Ok(HeaderName(Inner::Surface)),
-            _ => {
-                let valid = s.as_bytes().iter().all(|byte| matches!(*byte, b'0'..=b'9' | b'!' | b'#'..=b'\'' | b'*'..=b'+' | b'-'..=b'.' | b'^'..=b'`' | b'A'..=b'Z' | b'a'..=b'z' | b'|' | b'~'));
-                if valid {
-                    Ok(HeaderName(Inner::Other(s.to_string())))
-                } else {
-                    Err(Error::InvalidHeaderName(s.to_string()))
-                }
-            }
+            _ => Ok(HeaderName(Inner::Other(Rfc7230String::from_string(
+                s.to_string(),
+            )?))),
         }
     }
 
@@ -208,31 +204,31 @@ impl HeaderName {
     ///
     /// ```rust
     /// # use uka_sstp::HeaderName;
-    /// assert_eq!(HeaderName::CHARSET.as_bytes(), b"Charset");
-    /// assert_eq!(HeaderName::SENDER.as_bytes(), b"Sender");
-    /// assert_eq!(HeaderName::EVENT.as_bytes(), b"Event");
-    /// assert_eq!(HeaderName::REFERENCE0.as_bytes(), b"Reference0");
-    /// assert_eq!(HeaderName::REFERENCE1.as_bytes(), b"Reference1");
-    /// assert_eq!(HeaderName::REFERENCE2.as_bytes(), b"Reference2");
-    /// assert_eq!(HeaderName::REFERENCE3.as_bytes(), b"Reference3");
-    /// assert_eq!(HeaderName::REFERENCE4.as_bytes(), b"Reference4");
-    /// assert_eq!(HeaderName::REFERENCE5.as_bytes(), b"Reference5");
-    /// assert_eq!(HeaderName::REFERENCE6.as_bytes(), b"Reference6");
-    /// assert_eq!(HeaderName::REFERENCE7.as_bytes(), b"Reference7");
-    /// assert_eq!(HeaderName::SCRIPT.as_bytes(), b"Script");
-    /// assert_eq!(HeaderName::OPTION.as_bytes(), b"Option");
-    /// assert_eq!(HeaderName::ENTRY.as_bytes(), b"Entry");
-    /// assert_eq!(HeaderName::HWND.as_bytes(), b"HWnd");
-    /// assert_eq!(HeaderName::IF_GHOST.as_bytes(), b"IfGhost");
-    /// assert_eq!(HeaderName::COMMAND.as_bytes(), b"Command");
-    /// assert_eq!(HeaderName::DOCUMENT.as_bytes(), b"Document");
-    /// assert_eq!(HeaderName::SONGNAME.as_bytes(), b"Songname");
-    /// assert_eq!(HeaderName::SENTENCE.as_bytes(), b"Sentence");
-    /// assert_eq!(HeaderName::PORT.as_bytes(), b"Port");
-    /// assert_eq!(HeaderName::SURFACE.as_bytes(), b"Surface");
-    /// assert_eq!(HeaderName::from_static("X-Extend-Header").unwrap().as_bytes(), b"X-Extend-Header");
+    /// assert_eq!(HeaderName::CHARSET.to_vec(), b"Charset");
+    /// assert_eq!(HeaderName::SENDER.to_vec(), b"Sender");
+    /// assert_eq!(HeaderName::EVENT.to_vec(), b"Event");
+    /// assert_eq!(HeaderName::REFERENCE0.to_vec(), b"Reference0");
+    /// assert_eq!(HeaderName::REFERENCE1.to_vec(), b"Reference1");
+    /// assert_eq!(HeaderName::REFERENCE2.to_vec(), b"Reference2");
+    /// assert_eq!(HeaderName::REFERENCE3.to_vec(), b"Reference3");
+    /// assert_eq!(HeaderName::REFERENCE4.to_vec(), b"Reference4");
+    /// assert_eq!(HeaderName::REFERENCE5.to_vec(), b"Reference5");
+    /// assert_eq!(HeaderName::REFERENCE6.to_vec(), b"Reference6");
+    /// assert_eq!(HeaderName::REFERENCE7.to_vec(), b"Reference7");
+    /// assert_eq!(HeaderName::SCRIPT.to_vec(), b"Script");
+    /// assert_eq!(HeaderName::OPTION.to_vec(), b"Option");
+    /// assert_eq!(HeaderName::ENTRY.to_vec(), b"Entry");
+    /// assert_eq!(HeaderName::HWND.to_vec(), b"HWnd");
+    /// assert_eq!(HeaderName::IF_GHOST.to_vec(), b"IfGhost");
+    /// assert_eq!(HeaderName::COMMAND.to_vec(), b"Command");
+    /// assert_eq!(HeaderName::DOCUMENT.to_vec(), b"Document");
+    /// assert_eq!(HeaderName::SONGNAME.to_vec(), b"Songname");
+    /// assert_eq!(HeaderName::SENTENCE.to_vec(), b"Sentence");
+    /// assert_eq!(HeaderName::PORT.to_vec(), b"Port");
+    /// assert_eq!(HeaderName::SURFACE.to_vec(), b"Surface");
+    /// assert_eq!(HeaderName::from_static("X-Extend-Header").unwrap().to_vec(), b"X-Extend-Header");
     /// ```
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         self.to_string().into_bytes()
     }
 }
@@ -270,105 +266,5 @@ impl Display for HeaderName {
 impl From<HeaderName> for String {
     fn from(header_name: HeaderName) -> Self {
         header_name.to_string()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use anyhow::Result;
-    use rstest::rstest;
-
-    #[test]
-    fn test_from_static_pass_alpha() -> Result<()> {
-        let name = HeaderName::from_static("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")?;
-        assert_eq!(
-            name.to_string(),
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_from_static_pass_digit() -> Result<()> {
-        let name = HeaderName::from_static("1234567890")?;
-        assert_eq!(name.to_string(), "1234567890");
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_from_static_pass_acceptable_symbol() -> Result<()> {
-        let name = HeaderName::from_static("!#$%&'*+-.^_`|~")?;
-        assert_eq!(name.to_string(), "!#$%&'*+-.^_`|~");
-
-        Ok(())
-    }
-
-    #[rstest]
-    #[case::nul("\0")]
-    #[case::soh("\x01")]
-    #[case::stx("\x02")]
-    #[case::etx("\x03")]
-    #[case::eot("\x04")]
-    #[case::enq("\x05")]
-    #[case::ack("\x06")]
-    #[case::bel("\x07")]
-    #[case::bs("\x08")]
-    #[case::ht("\x09")]
-    #[case::lf("\n")]
-    #[case::vt("\x0b")]
-    #[case::ff("\x0c")]
-    #[case::cr("\r")]
-    #[case::so("\x0e")]
-    #[case::si("\x0f")]
-    #[case::dle("\x10")]
-    #[case::dc1("\x11")]
-    #[case::dc2("\x12")]
-    #[case::dc3("\x13")]
-    #[case::dc4("\x14")]
-    #[case::nak("\x15")]
-    #[case::syn("\x16")]
-    #[case::etb("\x17")]
-    #[case::can("\x18")]
-    #[case::em("\x19")]
-    #[case::sub("\x1a")]
-    #[case::esc("\x1b")]
-    #[case::fs("\x1c")]
-    #[case::gs("\x1d")]
-    #[case::rs("\x1e")]
-    #[case::us("\x1f")]
-    #[case::delete("\x7f")]
-    fn test_from_static_failed_control_character(#[case] input: String) -> Result<()> {
-        let res = HeaderName::from_static(&input);
-        assert!(res.is_err());
-        matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
-
-        Ok(())
-    }
-
-    #[rstest]
-    #[case::left_parenthesis("(")]
-    #[case::right_parenthesis(")")]
-    #[case::comma(",")]
-    #[case::slash("/")]
-    #[case::semicolon(";")]
-    #[case::less_than_sign("<")]
-    #[case::equals_sign("=")]
-    #[case::greater_than_sign(">")]
-    #[case::question_mark("?")]
-    #[case::at_sign("@")]
-    #[case::left_square_bracket("[")]
-    #[case::backslash("\\")]
-    #[case::right_square_bracket("]")]
-    #[case::left_curly_brace("{")]
-    #[case::right_curly_brace("}")]
-    fn test_from_static_failed_unavailable_symbols(#[case] input: String) -> Result<()> {
-        let res = HeaderName::from_static(&input);
-        assert!(res.is_err());
-        matches!(res, Err(Error::InvalidHeaderName(s)) if s == input);
-
-        Ok(())
     }
 }
