@@ -4,6 +4,7 @@ use log::{error, trace};
 use std::alloc::System;
 use std::ffi::OsString;
 use std::future::Future;
+use tokio::runtime;
 use tokio::runtime::Runtime;
 use uka_util::ptr::{OwnedPtr, RawPtr};
 
@@ -230,7 +231,10 @@ where
     fn from(value: Shiori<C, S>) -> Self {
         Adapter {
             shiori: value,
-            runtime: Runtime::new().expect("failed to create tokio runtime"),
+            runtime: runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("failed to create tokio runtime"),
         }
     }
 }
@@ -244,7 +248,10 @@ where
         let shiori = Shiori::from(value);
         Adapter {
             shiori,
-            runtime: Runtime::new().expect("failed to create tokio runtime"),
+            runtime: runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("failed to create tokio runtime"),
         }
     }
 }
