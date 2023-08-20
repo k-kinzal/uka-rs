@@ -204,7 +204,7 @@ impl Request {
     }
 
     /// Convert request to bytes.
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         buf.extend_from_slice(self.method.to_string().as_bytes());
         buf.extend_from_slice(b" ");

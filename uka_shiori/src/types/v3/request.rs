@@ -155,7 +155,7 @@ impl Request {
     }
 
     /// Convert request to bytes.
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         buf.extend_from_slice(self.method.to_string().as_bytes());
         buf.extend_from_slice(b" ");
@@ -391,11 +391,11 @@ mod tests {
         assert_eq!(request1.security_level(), request2.security_level());
 
         assert_eq!(
-            request1.as_bytes(),
-            request2.as_bytes(),
+            request1.to_vec(),
+            request2.to_vec(),
             "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-            String::from_utf8_lossy(&request1.as_bytes()),
-            String::from_utf8_lossy(&request2.as_bytes())
+            String::from_utf8_lossy(&request1.to_vec()),
+            String::from_utf8_lossy(&request2.to_vec())
         );
 
         Ok(())

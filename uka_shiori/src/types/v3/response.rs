@@ -142,7 +142,7 @@ impl Response {
         self.headers.get(&HeaderName::VALUE)
     }
 
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         buf.extend_from_slice(self.version.to_string().as_bytes());
         buf.extend_from_slice(b" ");
@@ -313,11 +313,11 @@ mod tests {
         assert_eq!(response1.sender(), response2.sender());
         assert_eq!(response1.value(), response2.value());
         assert_eq!(
-            response1.as_bytes(),
-            response2.as_bytes(),
+            response1.to_vec(),
+            response2.to_vec(),
             "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-            String::from_utf8_lossy(&response1.as_bytes()),
-            String::from_utf8_lossy(&response2.as_bytes())
+            String::from_utf8_lossy(&response1.to_vec()),
+            String::from_utf8_lossy(&response2.to_vec())
         );
 
         Ok(())
