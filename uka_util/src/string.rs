@@ -65,7 +65,7 @@ impl Rfc7230String {
     pub fn from_utf8(bytes: Vec<u8>) -> Result<Self> {
         let opt = bytes.iter().find(|byte| !matches!(*byte, b'0'..=b'9' | b'!' | b'#'..=b'\'' | b'*'..=b'+' | b'-'..=b'.' | b'^'..=b'`' | b'A'..=b'Z' | b'a'..=b'z' | b'|' | b'~'));
         if let Some(c) = opt {
-            Err(Error::InvalidCharacter(c.clone()))
+            Err(Error::InvalidCharacter(*c))
         } else {
             Ok(Self(
                 String::from_utf8(bytes).expect("unreachable: within the range of UTF-8"),
@@ -95,6 +95,12 @@ impl Deref for Rfc7230String {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl Default for Rfc7230String {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
