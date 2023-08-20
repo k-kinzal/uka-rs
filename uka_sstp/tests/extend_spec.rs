@@ -20,7 +20,7 @@ fn spec_duplicate_single_headers_can_get_the_first_header() -> Result<()> {
         .charset(Charset::UTF8)
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     assert_eq!(
         String::from_utf8(input.clone())?
@@ -138,7 +138,7 @@ fn spec_character_set_for_request_header_names_is_based_on_rfc_7230() -> Result<
         .header(HeaderName::from_static(name)?, "foo")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(
@@ -167,7 +167,7 @@ fn spec_character_set_for_response_header_names_is_based_on_rfc_7230() -> Result
         .header(HeaderName::from_static(name)?, "foo")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(

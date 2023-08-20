@@ -158,7 +158,7 @@ impl Caller<v3::Request> for ShioriCaller {
     unsafe fn call(&self, request: v3::Request) -> v3::Response {
         use v3::IntoResponse;
 
-        let bytes = request.as_bytes();
+        let bytes = request.to_vec();
         let len = bytes.len();
         let h = OwnedPtr::from_vec(bytes).into_raw_slice().as_ptr() as isize;
 

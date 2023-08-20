@@ -41,10 +41,10 @@ fn spec_shiori_request() -> anyhow::Result<()> {
     );
 
     assert_eq!(
-        request.as_bytes(),
+        request.to_vec(),
         input,
         "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-        String::from_utf8_lossy(&request.as_bytes()),
+        String::from_utf8_lossy(&request.to_vec()),
         String::from_utf8_lossy(&input)
     );
 
@@ -85,10 +85,10 @@ fn spec_shiori_response() -> anyhow::Result<()> {
     );
 
     assert_eq!(
-        response.as_bytes(),
+        response.to_vec(),
         input,
         "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-        String::from_utf8_lossy(&response.as_bytes()),
+        String::from_utf8_lossy(&response.to_vec()),
         String::from_utf8_lossy(&input)
     );
 
@@ -127,10 +127,10 @@ fn spec_shiori_response_with_name_of_person_to_talk_to() -> anyhow::Result<()> {
     );
 
     assert_eq!(
-        response.as_bytes(),
+        response.to_vec(),
         input,
         "\nassertion failed: `(left == right)\n  left: `{:?}`,\n right: `{:?}`",
-        String::from_utf8_lossy(&response.as_bytes()),
+        String::from_utf8_lossy(&response.to_vec()),
         String::from_utf8_lossy(&input)
     );
 

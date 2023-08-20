@@ -210,7 +210,7 @@ where
             }
         };
 
-        let bytes = resp.as_bytes();
+        let bytes = resp.to_vec();
         len.as_mut_ptr().write(bytes.len());
         let h = OwnedPtr::from_vec(bytes).into_raw_slice().as_ptr() as isize;
 
@@ -385,7 +385,7 @@ mod tests {
             .version(v3::Version::SHIORI_30)
             .build()
             .expect("failed to build request");
-        let bytes = ManuallyDrop::new(req.as_bytes());
+        let bytes = ManuallyDrop::new(req.to_vec());
         let len = bytes.len();
         let h =
             unsafe { adapter.request(bytes.as_ptr() as isize, &len as *const usize as *mut usize) };

@@ -27,7 +27,7 @@ fn example_notify1_0() -> Result<()> {
         .header(HeaderName::REFERENCE1, "筋肉少女帯")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::NOTIFY);
@@ -62,7 +62,7 @@ fn example_notify1_0() -> Result<()> {
     assert!(request.reference7().is_none());
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -103,7 +103,7 @@ fn example_notify1_1() -> Result<()> {
         )
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::NOTIFY);
@@ -159,7 +159,7 @@ fn example_notify1_1() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -184,7 +184,7 @@ fn example_send_1_1() -> Result<()> {
         .header(HeaderName::OPTION, "nodescript,notranslate")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::SEND);
@@ -209,7 +209,7 @@ fn example_send_1_1() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -239,7 +239,7 @@ fn example_send_1_2() -> Result<()> {
         .header(HeaderName::ENTRY, "#temp1,\\h\\s0酒に逃げるなヨ！\\e")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::SEND);
@@ -271,7 +271,7 @@ fn example_send_1_2() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -309,7 +309,7 @@ fn example_send_1_3() -> Result<()> {
         )
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::SEND);
@@ -345,7 +345,7 @@ fn example_send_1_3() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -392,7 +392,7 @@ fn example_send_1_4() -> Result<()> {
         )
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::SEND);
@@ -433,7 +433,7 @@ fn example_send_1_4() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -456,7 +456,7 @@ fn example_execute_1_0() -> Result<()> {
         .header(HeaderName::COMMAND, "GetName")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::EXECUTE);
@@ -473,7 +473,7 @@ fn example_execute_1_0() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -503,7 +503,7 @@ fn example_execute_1_1() -> Result<()> {
         .header(HeaderName::COMMAND, "SetCookie[visitcount,1]")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::EXECUTE);
@@ -520,7 +520,7 @@ fn example_execute_1_1() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     let request = Request::builder()
         .execute(Version::SSTP_11)
@@ -528,7 +528,7 @@ fn example_execute_1_1() -> Result<()> {
         .header(HeaderName::COMMAND, "GetCookie[visitcount]")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::EXECUTE);
@@ -545,7 +545,7 @@ fn example_execute_1_1() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -568,7 +568,7 @@ fn example_execute_1_2() -> Result<()> {
         .header(HeaderName::COMMAND, "GetVersion")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::EXECUTE);
@@ -585,7 +585,7 @@ fn example_execute_1_2() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -608,7 +608,7 @@ fn example_execute_1_3() -> Result<()> {
         .header(HeaderName::COMMAND, "Quiet")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::EXECUTE);
@@ -625,7 +625,7 @@ fn example_execute_1_3() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -648,7 +648,7 @@ fn example_give_1_1() -> Result<()> {
         .header(HeaderName::DOCUMENT, "こんにちはさくらです。闇の力を秘めし鍵よ真の姿を我の前に示せレリーズ。汝のあるべき姿に戻れクロウカード。")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::GIVE);
@@ -666,7 +666,7 @@ fn example_give_1_1() -> Result<()> {
         Some("こんにちはさくらです。闇の力を秘めし鍵よ真の姿を我の前に示せレリーズ。汝のあるべき姿に戻れクロウカード。".to_string()));
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -691,7 +691,7 @@ fn example_communicate_1_1() -> Result<()> {
         .header(HeaderName::OPTION, "substitute")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::COMMUNICATE);
@@ -716,7 +716,7 @@ fn example_communicate_1_1() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -745,7 +745,7 @@ fn example_communicate_1_2() -> Result<()> {
         .header(HeaderName::REFERENCE0, "N/A")
         .charset(Charset::SHIFT_JIS)
         .build()?;
-    let input = request.as_bytes();
+    let input = request.to_vec();
 
     let request = Request::parse(&input)?;
     assert_eq!(request.method(), Method::COMMUNICATE);
@@ -776,7 +776,7 @@ fn example_communicate_1_2() -> Result<()> {
     );
     assert_eq!(request.charset(), Charset::SHIFT_JIS);
 
-    assert_eq!(request.as_bytes(), input);
+    assert_eq!(request.to_vec(), input);
 
     Ok(())
 }
@@ -803,7 +803,7 @@ fn example_response_no_additional() -> Result<()> {
             "\\h\\s0テストー。\\u\\s[10]テストやな。",
         )
         .build()?;
-    let input = response.as_bytes();
+    let input = response.to_vec();
 
     let response = Response::parse(&input)?;
     assert_eq!(response.version(), Version::SSTP_14);
@@ -819,7 +819,7 @@ fn example_response_no_additional() -> Result<()> {
     matches!(response.additional(), AdditionalData::Empty);
     assert_eq!(response.additional().text()?, "");
 
-    assert_eq!(response.as_bytes(), input);
+    assert_eq!(response.to_vec(), input);
 
     Ok(())
 }
@@ -847,7 +847,7 @@ fn example_response_use_additional() -> Result<()> {
         )
         .additional("追加データはここ")
         .build()?;
-    let input = response.as_bytes();
+    let input = response.to_vec();
 
     let response = Response::parse(&input)?;
     assert_eq!(response.version(), Version::SSTP_14);
@@ -867,7 +867,7 @@ fn example_response_use_additional() -> Result<()> {
         "追加データはここ"
     );
 
-    assert_eq!(response.as_bytes(), input);
+    assert_eq!(response.to_vec(), input);
 
     Ok(())
 }
