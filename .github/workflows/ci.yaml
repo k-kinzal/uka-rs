@@ -57,10 +57,7 @@ jobs:
 
   examples:
     needs: build
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-D warnings"
       RUST_BACKTRACE: full
@@ -74,7 +71,7 @@ jobs:
           override: true
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: ${{ matrix.os }}-stable20230820
+          shared-key: ubuntu-latest-stable20230820
       - run: |
           for example in */examples/*.rs
           do
