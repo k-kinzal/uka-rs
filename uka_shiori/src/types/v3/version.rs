@@ -1,4 +1,6 @@
+use std::ffi::OsString;
 use std::fmt;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, PartialOrd, Copy, Clone, Eq, Ord, Hash)]
 enum Protocol {
@@ -38,5 +40,28 @@ impl fmt::Display for Version {
         f.write_str(match self.0 {
             SHIORI30 => "SHIORI/3.0",
         })
+    }
+}
+
+impl FromStr for Version {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "SHIORI/3.0" => Ok(Version::SHIORI_30),
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<String> for Version {
+    fn from(s: String) -> Self {
+        Version::from_str(&s).expect("unreachable: failed to parse version")
+    }
+}
+
+impl From<OsString> for Version {
+    fn from(s: OsString) -> Self {
+        Version::from_str(&s.to_string_lossy()).expect("unreachable: failed to parse version")
     }
 }
