@@ -352,10 +352,10 @@ impl Builder {
         Ok(Response {
             version: inner.version.ok_or(Error::MissingVersion)?,
             status_code: inner.status_code.ok_or(Error::MissingStatusCode)?,
-            headers: inner.headers.iter().fold(
-                Ok(HeaderMap::with_capacity(inner.headers.len())),
+            headers: inner.headers.iter().try_fold(
+                HeaderMap::with_capacity(inner.headers.len()),
                 |acc, (name, value)| {
-                    value.iter().fold(acc, |acc, value| {
+                    value.iter().try_fold(acc, |mut headers, value| {
                         let name = HeaderName::from_static(name).map_err(Error::from);
                         let value = if value.chars().all(|c| c.is_ascii_graphic()) {
                             HeaderValue::from_static(value).map_err(Error::from)
@@ -363,14 +363,12 @@ impl Builder {
                             HeaderValue::from_static_with_charset(value, charset)
                                 .map_err(Error::from)
                         };
-                        acc.and_then(|mut headers| {
-                            name.and_then(|name| value.map(|value| (name, value))).map(
-                                |(name, value)| {
-                                    headers.insert(name, value);
-                                    headers
-                                },
-                            )
-                        })
+                        name.and_then(|name| value.map(|value| (name, value))).map(
+                            |(name, value)| {
+                                headers.insert(name, value);
+                                headers
+                            },
+                        )
                     })
                 },
             )?,
