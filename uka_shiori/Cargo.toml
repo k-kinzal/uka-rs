@@ -15,4 +15,4 @@ uka_util = { path = "../uka_util" }
 [dev-dependencies]
 anyhow = "1.0.75"
 once_cell = "1.18.0"
-rstest = "0.18.1"
+rstest = "0.18.2"
