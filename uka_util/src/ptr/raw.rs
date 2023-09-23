@@ -1,5 +1,7 @@
 use crate::alloc::Allocator;
 use crate::ptr::OwnedPtr;
+#[cfg(windows)]
+use std::ffi::c_void;
 use std::ptr::NonNull;
 #[cfg(windows)]
 use windows::Win32::Foundation::HGLOBAL;
@@ -288,11 +290,12 @@ impl<T> RawPtr<[T]> {
     /// # Examples
     ///
     /// ```rust
+    /// # use std::ffi::c_void;
     /// # use windows::Win32::Foundation::HGLOBAL;
-    /// use uka_util::ptr::RawPtr;
+    /// # use uka_util::ptr::RawPtr;
     /// #
     /// let mut value = [1, 2, 3];
-    /// let hglobal = HGLOBAL(value.as_ptr() as isize);
+    /// let hglobal = HGLOBAL(value.as_ptr() as *mut c_void);
     /// unsafe {
     ///    let ptr = RawPtr::<[i32]>::from_hglobal_parts(hglobal, value.len());
     ///   assert_eq!(ptr.as_slice(), &value[..]);
@@ -543,14 +546,14 @@ impl<T> From<RawPtr<[T]>> for isize {
 #[cfg(windows)]
 impl<T> From<RawPtr<T>> for HGLOBAL {
     fn from(value: RawPtr<T>) -> Self {
-        Self(value.into())
+        Self(value.as_ptr() as *mut c_void)
     }
 }
 
 #[cfg(windows)]
 impl<T> From<RawPtr<[T]>> for HGLOBAL {
     fn from(value: RawPtr<[T]>) -> Self {
-        Self(value.into())
+        Self(value.as_ptr() as *mut c_void)
     }
 }
 

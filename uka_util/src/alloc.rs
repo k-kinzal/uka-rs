@@ -1,9 +1,11 @@
 use std::alloc::{GlobalAlloc, Layout, System};
+#[cfg(windows)]
+use std::ffi::c_void;
 use std::ptr::NonNull;
 #[cfg(windows)]
-use windows::Win32::Foundation::HGLOBAL;
+use windows::Win32::Foundation::{GlobalFree, HGLOBAL};
 #[cfg(windows)]
-use windows::Win32::System::Memory::{GlobalAlloc, GlobalFree, GMEM_FIXED};
+use windows::Win32::System::Memory::{GlobalAlloc, GMEM_FIXED};
 
 #[derive(thiserror::Error, Debug)]
 #[error("failed to allocate memory")]
@@ -92,7 +94,7 @@ impl Allocator for UkaAllocator {
     }
 
     fn deallocate(&self, ptr: NonNull<u8>, _layout: Layout) {
-        let hglobal = HGLOBAL(ptr.as_ptr() as isize);
+        let hglobal = HGLOBAL(ptr.as_ptr() as *mut c_void);
         // FIXME: Error returns if memory is successfully released.
         let _ = unsafe { GlobalFree(hglobal) };
     }
