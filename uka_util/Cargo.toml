@@ -10,7 +10,7 @@ ascii = "1.1.0"
 encoding_rs = "0.8.33"
 thiserror = "1.0.56"
 uka_macro = { path = "../uka_macro" }
-libc = "0.2.151"
+libc = "0.2.152"
 windows = { version = "0.52.0", features = ["Win32_System_Memory", "Win32_Foundation"] }
 
 [dev-dependencies]
