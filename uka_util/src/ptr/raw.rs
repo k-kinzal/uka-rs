@@ -1,7 +1,5 @@
 use crate::alloc::Allocator;
 use crate::ptr::OwnedPtr;
-#[cfg(windows)]
-use std::ffi::c_void;
 use std::ptr::NonNull;
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::HGLOBAL;
@@ -476,7 +474,6 @@ impl<T> From<isize> for RawPtr<T> {
     }
 }
 
-
 impl<T> From<RawPtr<T>> for *mut T {
     fn from(value: RawPtr<T>) -> Self {
         value.as_mut_ptr()
@@ -536,8 +533,6 @@ impl<T> From<RawPtr<[T]>> for isize {
         value.as_ptr() as isize
     }
 }
-
-
 
 impl<T> From<RawPtr<T>> for NonNull<T> {
     fn from(value: RawPtr<T>) -> Self {

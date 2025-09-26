@@ -3,7 +3,7 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::ffi::c_void;
 use std::ptr::NonNull;
 #[cfg(windows)]
-use windows_sys::Win32::Foundation::{GlobalFree, HGLOBAL};
+use windows_sys::Win32::Foundation::GlobalFree;
 #[cfg(windows)]
 use windows_sys::Win32::System::Memory::{GlobalAlloc, GMEM_FIXED};
 
