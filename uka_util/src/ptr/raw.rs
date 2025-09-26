@@ -288,12 +288,11 @@ impl<T> RawPtr<[T]> {
     /// # Examples
     ///
     /// ```rust
-    /// # use std::ffi::c_void;
     /// # use windows_sys::Win32::Foundation::HGLOBAL;
     /// # use uka_util::ptr::RawPtr;
     /// #
     /// let mut value = [1, 2, 3];
-    /// let hglobal = value.as_ptr() as *mut c_void;
+    /// let hglobal = value.as_ptr() as HGLOBAL;
     /// unsafe {
     ///    let ptr = RawPtr::<[i32]>::from_hglobal_parts(hglobal, value.len());
     ///   assert_eq!(ptr.as_slice(), &value[..]);
