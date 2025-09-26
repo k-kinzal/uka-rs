@@ -64,7 +64,7 @@ pub fn parse_request(input: &[u8]) -> Result<Request> {
     let headers = parse_headers(&mut cursor)?;
     let charset = headers
         .get(&HeaderName::CHARSET)
-        .ok_or_else(|| Error::MissingHeader(HeaderName::CHARSET))
+        .ok_or(Error::MissingHeader(HeaderName::CHARSET))
         .and_then(|v| {
             v.text()
                 .map_err(|e| Error::FailedDecode(HeaderName::CHARSET, e))
@@ -91,7 +91,7 @@ pub fn parse_response(input: &[u8]) -> Result<Response> {
     let headers = parse_headers(&mut cursor)?;
     let charset = headers
         .get(&HeaderName::CHARSET)
-        .ok_or_else(|| Error::MissingHeader(HeaderName::CHARSET))
+        .ok_or(Error::MissingHeader(HeaderName::CHARSET))
         .and_then(|v| {
             v.text()
                 .map_err(|e| Error::FailedDecode(HeaderName::CHARSET, e))
