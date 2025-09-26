@@ -11,4 +11,4 @@ uka_util = { path = "../uka_util" }
 
 [dev-dependencies]
 anyhow = "1.0.82"
-rstest = "0.19.0"
+rstest = "0.26.0"
