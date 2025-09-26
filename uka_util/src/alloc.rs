@@ -93,7 +93,7 @@ impl Allocator for UkaAllocator {
     }
 
     fn deallocate(&self, ptr: NonNull<u8>, _layout: Layout) {
-        let hglobal = HGLOBAL(ptr.as_ptr() as *mut c_void);
+        let hglobal = ptr.as_ptr() as *mut c_void;
         // FIXME: Error returns if memory is successfully released.
         let _ = unsafe { GlobalFree(hglobal) };
     }

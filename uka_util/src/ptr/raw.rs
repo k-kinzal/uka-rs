@@ -302,7 +302,7 @@ impl<T> RawPtr<[T]> {
     /// }
     #[cfg(windows)]
     pub unsafe fn from_hglobal_parts(hglobal: HGLOBAL, len: usize) -> Self {
-        Self::from_raw_parts(hglobal.0 as *mut T, len)
+        Self::from_raw_parts(hglobal as *mut T, len)
     }
     /// Returns the raw pointer of `T`.
     ///
@@ -476,12 +476,6 @@ impl<T> From<isize> for RawPtr<T> {
     }
 }
 
-#[cfg(windows)]
-impl<T> From<HGLOBAL> for RawPtr<T> {
-    fn from(value: HGLOBAL) -> Self {
-        Self::from(value.0 as *mut T)
-    }
-}
 
 impl<T> From<RawPtr<T>> for *mut T {
     fn from(value: RawPtr<T>) -> Self {
@@ -543,19 +537,7 @@ impl<T> From<RawPtr<[T]>> for isize {
     }
 }
 
-#[cfg(windows)]
-impl<T> From<RawPtr<T>> for HGLOBAL {
-    fn from(value: RawPtr<T>) -> Self {
-        Self(value.as_ptr() as *mut c_void)
-    }
-}
 
-#[cfg(windows)]
-impl<T> From<RawPtr<[T]>> for HGLOBAL {
-    fn from(value: RawPtr<[T]>) -> Self {
-        Self(value.as_ptr() as *mut c_void)
-    }
-}
 
 impl<T> From<RawPtr<T>> for NonNull<T> {
     fn from(value: RawPtr<T>) -> Self {
