@@ -11,7 +11,7 @@ encoding_rs = "0.8.34"
 thiserror = "2.0.0"
 uka_macro = { path = "../uka_macro" }
 libc = "0.2.154"
-windows = { version = "0.56.0", features = ["Win32_System_Memory", "Win32_Foundation"] }
+windows-sys = { version = "0.59.0", features = ["Win32_System_Memory", "Win32_Foundation"] }
 
 [dev-dependencies]
 anyhow = "1.0.82"

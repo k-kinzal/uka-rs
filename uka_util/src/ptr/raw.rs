@@ -4,7 +4,7 @@ use crate::ptr::OwnedPtr;
 use std::ffi::c_void;
 use std::ptr::NonNull;
 #[cfg(windows)]
-use windows::Win32::Foundation::HGLOBAL;
+use windows_sys::Win32::Foundation::HGLOBAL;
 
 /// `RawPtr<T>` handles raw pointers to values outside of Rust's memory management. For example, `std::mem::forget` values or externally allocated memory.
 ///
