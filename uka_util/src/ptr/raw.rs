@@ -1,10 +1,8 @@
 use crate::alloc::Allocator;
 use crate::ptr::OwnedPtr;
-#[cfg(windows)]
-use std::ffi::c_void;
 use std::ptr::NonNull;
 #[cfg(windows)]
-use windows::Win32::Foundation::HGLOBAL;
+use windows_sys::Win32::Foundation::HGLOBAL;
 
 /// `RawPtr<T>` handles raw pointers to values outside of Rust's memory management. For example, `std::mem::forget` values or externally allocated memory.
 ///
@@ -290,19 +288,18 @@ impl<T> RawPtr<[T]> {
     /// # Examples
     ///
     /// ```rust
-    /// # use std::ffi::c_void;
-    /// # use windows::Win32::Foundation::HGLOBAL;
+    /// # use windows_sys::Win32::Foundation::HGLOBAL;
     /// # use uka_util::ptr::RawPtr;
     /// #
     /// let mut value = [1, 2, 3];
-    /// let hglobal = HGLOBAL(value.as_ptr() as *mut c_void);
+    /// let hglobal = value.as_ptr() as HGLOBAL;
     /// unsafe {
     ///    let ptr = RawPtr::<[i32]>::from_hglobal_parts(hglobal, value.len());
     ///   assert_eq!(ptr.as_slice(), &value[..]);
     /// }
     #[cfg(windows)]
     pub unsafe fn from_hglobal_parts(hglobal: HGLOBAL, len: usize) -> Self {
-        Self::from_raw_parts(hglobal.0 as *mut T, len)
+        Self::from_raw_parts(hglobal as *mut T, len)
     }
     /// Returns the raw pointer of `T`.
     ///
@@ -476,13 +473,6 @@ impl<T> From<isize> for RawPtr<T> {
     }
 }
 
-#[cfg(windows)]
-impl<T> From<HGLOBAL> for RawPtr<T> {
-    fn from(value: HGLOBAL) -> Self {
-        Self::from(value.0 as *mut T)
-    }
-}
-
 impl<T> From<RawPtr<T>> for *mut T {
     fn from(value: RawPtr<T>) -> Self {
         value.as_mut_ptr()
@@ -540,20 +530,6 @@ impl<T> From<RawPtr<T>> for isize {
 impl<T> From<RawPtr<[T]>> for isize {
     fn from(value: RawPtr<[T]>) -> Self {
         value.as_ptr() as isize
-    }
-}
-
-#[cfg(windows)]
-impl<T> From<RawPtr<T>> for HGLOBAL {
-    fn from(value: RawPtr<T>) -> Self {
-        Self(value.as_ptr() as *mut c_void)
-    }
-}
-
-#[cfg(windows)]
-impl<T> From<RawPtr<[T]>> for HGLOBAL {
-    fn from(value: RawPtr<[T]>) -> Self {
-        Self(value.as_ptr() as *mut c_void)
     }
 }
 
