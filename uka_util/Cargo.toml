@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 ascii = "1.1.0"
 encoding_rs = "0.8.34"
-thiserror = "1.0.59"
+thiserror = "2.0.0"
 uka_macro = { path = "../uka_macro" }
 libc = "0.2.154"
 windows = { version = "0.56.0", features = ["Win32_System_Memory", "Win32_Foundation"] }
