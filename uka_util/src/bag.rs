@@ -146,7 +146,7 @@ impl<K: Eq + Hash, V> OrderedBag<K, V> {
     /// assert_eq!(iter.next(), Some(&("key2", "value2")));
     /// assert!(iter.next().is_none());
     /// ```
-    pub fn iter(&self) -> std::slice::Iter<(K, V)> {
+    pub fn iter(&self) -> std::slice::Iter<'_, (K, V)> {
         self.entries.iter()
     }
 }
