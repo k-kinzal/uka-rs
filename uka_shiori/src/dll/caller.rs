@@ -28,6 +28,7 @@ type UnloadFunc = unsafe extern "C" fn() -> bool;
 /// extern "C" __declspec(dllexport) HGLOBAL __cdecl request(HGLOBAL h, long *len);
 /// function request(h: hglobal; var len: longint): hglobal; cdecl; export;
 /// ```
+#[allow(dead_code)]
 type RequestFunc = unsafe extern "C" fn(h: isize, len: *mut usize) -> isize;
 
 /// Library wraps the SHIORI DLL so that Rust can call load/unload/request.
@@ -77,6 +78,7 @@ impl Library {
     }
 
     /// Call SHIORI DLL request.
+    #[allow(dead_code)]
     pub fn request(&self, h: isize, len: *mut usize) -> isize {
         unsafe {
             let func = self
@@ -105,6 +107,7 @@ pub enum Error {
 }
 
 /// Caller is the interface for calling the SHIORI DLL.
+#[allow(dead_code)]
 trait Caller<R> {
     /// Response that is a pair of `R` of Request
     type Response;
