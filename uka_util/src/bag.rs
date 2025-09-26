@@ -63,10 +63,10 @@ impl<K: Eq + Hash, V> OrderedBag<K, V> {
     /// bag.insert("key1", "value1");
     /// assert_eq!(bag.get("key1"), Some(&"value1"));
     /// ```
-    pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
+    pub fn get<Q>(&self, k: &Q) -> Option<&V>
     where
+        Q: ?Sized + Eq + Hash,
         K: Borrow<Q>,
-        Q: Eq + Hash,
     {
         self.map
             .get(k)
@@ -87,10 +87,10 @@ impl<K: Eq + Hash, V> OrderedBag<K, V> {
     ///
     /// assert_eq!(bag.get_all("key1"), [&"value1", &"value2"].to_vec());
     /// ```
-    pub fn get_all<Q: ?Sized>(&self, k: &Q) -> Vec<&V>
+    pub fn get_all<Q>(&self, k: &Q) -> Vec<&V>
     where
+        Q: ?Sized + Eq + Hash,
         K: Borrow<Q>,
-        Q: Eq + Hash,
     {
         self.map
             .get(k)
