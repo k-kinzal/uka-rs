@@ -259,6 +259,7 @@ where
 trait BytesExt {
     type Type;
     fn from_bytes(bytes: &[Self::Type]) -> Self;
+    #[allow(dead_code)]
     fn to_vec(&self) -> Vec<Self::Type>;
 }
 
