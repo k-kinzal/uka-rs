@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "examples/ghost",
+    "uka_sakura_script",
     "uka_macro",
     "uka_shiori",
     "uka_sstp",
