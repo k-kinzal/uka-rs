@@ -15,5 +15,5 @@ windows-sys = { version = "0.61.0", features = ["Win32_System_Memory", "Win32_Fo
 
 [dev-dependencies]
 anyhow = "1.0.82"
-rstest = "0.26.0"
+rstest = "0.28.0"
 
